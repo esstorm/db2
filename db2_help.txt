@@ -1,0 +1,194 @@
+Questions and answers
+
+1. From where can we get information about objects?
+
+- from data dictionary views
+
+  USER_ (objects that the user owns, e.g. USER_TABLES)
+  ALL_  (objects that the user has privileges to see e.g. ALL_TABLES)
+  DBA_  (all objects in the database e.g. DBA_TABLES)
+
+2. Which tables belong to a schema?
+
+- DBA_TABLES view lists all tables in the database
+
+SELECT table_name FROM dba_tables WHERE owner='HR';
+
+table_name
+-----------
+DEPARTMENTS
+EMPLOYEES
+JOBS
+JOB_HISTORY
+...
+
+3. What is the name and datatype of a column in a table? Which is the 1st, 2nd ... column?
+
+- See DBA_TAB_COLUMNS
+
+ CREATE TABLE proba1
+  (c10 CHAR(10) DEFAULT 'bubu',   vc20 VARCHAR2(20),     blo BLOB,
+   num NUMBER,                    num10_2 NUMBER(10,2),  num10 NUMBER(10) DEFAULT 100,  
+   dat DATE DEFAULT TO_DATE('2007.01.01', 'yyyy.mm.dd'), rid ROWID);
+
+ Querying the above table:
+
+ SELECT column_id, column_name, data_type, data_length, data_precision, data_scale, data_default
+ FROM dba_tab_columns WHERE owner='NIKOVITS' AND table_name='PROBA1' ORDER BY column_id;
+
+c_id  c_name  data_type  data_length  prec   scale    data_default
+----------------------------------------------------------------------------------------
+1	C10	CHAR		10			'bubu'
+2	VC20	VARCHAR2	20			
+3	BLO	BLOB		4000			
+4	NUM	NUMBER		22			
+5	NUM10_2	NUMBER		22	10	2	
+6	NUM10	NUMBER		22	10	0	100
+7	DAT	DATE		7			TO_DATE('2007.01.01', 'yyyy.mm.dd')
+8	RID	ROWID		10			
+
+
+4. What other objects are there in the database?
+
+- A lot of useful objects ... views, indexes, procedures etc. see DBA_OBJECTS view.
+
+ SELECT object_name, object_type FROM DBA_OBJECTS WHERE owner='NIKOVITS';
+
+object_name     object_type
+-------------------------------
+CIKK		TABLE
+CIKK_IOT_PK	INDEX
+CIKK_PROJ_DB	VIEW
+CIMLISTA_TAB	TYPE
+CITIES_SPIDX	INDEX
+CL1		CLUSTER
+ELADASOK	TABLE
+ELADASOK	TABLE PARTITION
+GEOM2SVG	PROCEDURE
+...
+
+
+5. How much space is allocated to a table, index etc?
+
+- Not all objects allocate space (data blocks) in the database ->  a view, a procedure ...
+  Only their definition is stored in the data dictionary.
+  Objects that allocate data blocks have one (or specially more) segment.
+  If we want to know how much space a table occupies, we must investigate its segment(s)
+  see DBA_SEGMENTS.
+
+ SELECT owner, segment_name, segment_type, extents, blocks, bytes 
+ FROM dba_segments WHERE owner='SH' AND segment_name IN ('CUSTOMERS', 'CUSTOMERS_PK');
+
+owner  segment_name  segment_type   extents   blocks    bytes
+----------------------------------------------------------------
+SH	CUSTOMERS_PK	INDEX		16	128	1048576
+SH	CUSTOMERS	TABLE		27	1536	12582912
+
+We can see the number of extents, number of blocks, bytes.
+Objects that don't allocate space are not listed in DBA_SEGMENTS view.
+
+
+6. Where are the bytes stored?
+
+- In data files (.dbf), which contain data blocks.
+  DBA_DATA_FILES tells us the size of a file, and the name the operating system uses for that file.
+
+ SELECT file_id, file_name, bytes, blocks FROM dba_data_files;
+ 
+file_id    file_name                                     bytes          blocks
+------------------------------------------------------------------------------
+1	/u01/app/oracle/oradata/ablinux/system01.dbf	734003200	89600
+2	/u01/app/oracle/oradata/ablinux/sysaux01.dbf	1289748480	157440
+3	/u01/app/oracle/oradata/ablinux/undotbs01.dbf	671088640	81920
+4	/u01/app/oracle/oradata/ablinux/users01.dbf	456130560	55680
+5	/u01/app/oracle/oradata/ablinux/example01.dbf	1572864000	192000
+6	/u01/app/oracle/oradata/ablinux/users02.dbf	1048576000	128000
+
+
+7. Which data blocks are allocated to a table within a data file?
+
+- Extents give us information about that. An Extent is a continouos area, having several data blocks.
+  An Extent is within one data file.
+  Information about extents ->  DBA_EXTENTS
+
+ SELECT segment_name, segment_type, file_id, block_id, blocks 
+ FROM dba_extents WHERE owner='NIKOVITS' AND segment_name='TABLA_123';
+
+segment_name  segment_type   file_id   block_id  blocks
+-------------------------------------------------------
+TABLA_123	TABLE		6	4168       8
+TABLA_123	TABLE		4	1736       8
+TABLA_123	TABLE		4	1744       8
+TABLA_123	TABLE		4	1992       8
+
+The above table has 4 extents in two different data files (file_id=4, file_id=6).
+
+
+8. Which objects have segment and which don't have?
+
+ See OBJECT_ID and DATA_OBJECT_ID in DBA_OBJECTS.
+ If DATA _OBJECT_ID is NULL or 0 -> no segment
+ Only definition of the object is stored.
+
+ SELECT object_name, object_type, object_id, data_object_id FROM dba_objects WHERE owner='NIKOVITS';
+
+object_name  object_type    object_id  data_object_id
+-----------------------------------------------------
+CIKK		TABLE		93589	93589
+C_CKOD		INDEX		98330	98330
+GEOM2SVG	PROCEDURE	93211	(null)
+CIMLISTA_TAB	TYPE		91577   (null)	
+CL1		CLUSTER		96055	96055
+CIKK_PROJ_DB	VIEW		99572	(null)
+ 
+
+9. What are tablespaces?
+
+ SELECT tablespace_name, status, block_size, CONTENTS FROM dba_tablespaces;
+
+TABLESPACE_NAME                STATUS    BLOCK_SIZE             CONTENTS  
+------------------------------ --------- ---------------------- --------- 
+SYSTEM                         ONLINE    8192                   PERMANENT 
+SYSAUX                         ONLINE    8192                   PERMANENT 
+UNDOTBS1                       ONLINE    8192                   UNDO      
+TEMP                           ONLINE    8192                   TEMPORARY 
+USERS                          ONLINE    8192                   PERMANENT 
+EXAMPLE                        ONLINE    8192                   PERMANENT 
+RDF_USERS                      ONLINE    8192                   PERMANENT
+
+
+10. ROWID
+
+ OOOOOOFFFBBBBBBRRR see DBMS_ROWID package.
+
+SELECT ename, dbms_rowid.rowid_object(ROWID) dataobj, 
+        dbms_rowid.rowid_relative_fno(ROWID) file_num,
+        dbms_rowid.rowid_block_number(ROWID) block_num,
+        dbms_rowid.rowid_row_number(ROWID) row_num
+FROM emp WHERE ename = 'KING';
+
+ENAME      DATAOBJ                FILENUM  BLOCK_NUM  ROW_NUM     
+---------- ---------------------- -------  ---------  -------
+KING       248453                 6        54988      19   
+
+First two numbers can be found in DBA_OBJECTS.DATA_OBJECT_ID and DBA_DATA_FILES. FILE_ID
+columns.
+
+ SELECT owner, object_name, object_type FROM dba_objects WHERE data_object_id=248453;
+
+OWNER                          OBJECT_NAME    OBJECT_TYPE         
+------------------------------ -------------- ------------------- 
+NIKOVITS                       DOLGOZO        TABLE               
+
+
+ SELECT file_name, tablespace_name FROM dba_data_files WHERE file_id=6;
+
+FILE_NAME                                       TABLESPACE_NAME  
+----------------------------------------------- ---------------
+/home/oracle/oradata/ORA11G/users02.dbf         USERS
+
+
+
+
+
+

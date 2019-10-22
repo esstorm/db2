@@ -1,0 +1,144 @@
+-- Information about clusters (in data dictionary views): 
+-- DBA_CLUSTERS 
+-- DBA_TABLES (cluster_name -> which cluster) 
+-- DBA_CLU_COLUMNS (table columns to cluster columns)
+-- DBA_CLUSTER_HASH_EXPRESSIONS 
+
+drop table emp_clt;
+drop table dept_clt;
+drop cluster personnel_cl;
+drop table cikk_hclt;
+drop table szallit_hclt;
+drop cluster cikk_hcl;
+drop table cikk_hcl2t;
+drop cluster cikk_hcl2;
+drop cluster cikk_hcl3;
+
+-- Creating a cluster (it will be an index cluster):
+CREATE CLUSTER personnel_cl (department_number NUMBER(2)) SIZE 4K;
+
+-- Creating tables on the cluster:
+CREATE TABLE emp_clt
+  (empno NUMBER PRIMARY KEY, ename VARCHAR2(30), job VARCHAR2(27),
+   mgr NUMBER(4), hiredate DATE, sal NUMBER(7,2), comm NUMBER(7,2), 
+   deptno NUMBER(2) NOT NULL)
+CLUSTER personnel_cl (deptno);
+  
+CREATE TABLE dept_clt
+  (deptno NUMBER(2), dname VARCHAR2(42), loc VARCHAR2(39))
+CLUSTER personnel_cl (deptno);
+
+-- Creating cluster index (only after index creation can we insert rows):
+CREATE INDEX personnel_cl_idx ON CLUSTER personnel_cl;
+INSERT INTO emp_clt SELECT * FROM emp;
+INSERT INTO dept_clt SELECT * FROM dept;
+
+/*******
+After creating the above objects let's see the following query. 
+We can see that one row from the emp table and one row from the dept table
+have the same ROWID. (The first two rows.)
+
+SELECT rowid, ename ename_dname FROM emp_clt WHERE deptno=10
+ UNION
+SELECT rowid, dname FROM dept_clt WHERE deptno=10;
+
+rowid                ename_dname
+--------------------------------
+AAB7goAAEAAAPG9AAA   ACCOUNTING
+AAB7goAAEAAAPG9AAA   CLARK
+AAB7goAAEAAAPG9AAB   KING
+AAB7goAAEAAAPG9AAC   MILLER
+********/
+
+
+-- We create a hash cluster (-> HASHKEYS !!!) and two tables on it:
+
+CREATE CLUSTER cikk_hcl (ckod  NUMBER ) SIZE 4K  HASHKEYS 30;
+CREATE TABLE cikk_hclt(ckod NUMBER, cnev VARCHAR2(20), 
+             szin VARCHAR2(15), suly FLOAT) 
+CLUSTER cikk_hcl(ckod); 
+INSERT INTO cikk_hclt select * from cikk;
+CREATE TABLE szallit_hclt(szkod NUMBER, ckod NUMBER, pkod NUMBER, 
+             mennyiseg NUMBER, datum DATE) 
+CLUSTER cikk_hcl(ckod); 
+INSERT INTO szallit_hclt select * from szallit;
+
+-- We give the definition of the hash function (HASH IS):
+
+CREATE CLUSTER cikk_hcl2 (ckod  NUMBER ) HASHKEYS 30 HASH IS MOD(ckod, 53);
+CREATE TABLE cikk_hcl2t(ckod NUMBER, cnev VARCHAR2(20), 
+             szin VARCHAR2(15), suly FLOAT) 
+CLUSTER cikk_hcl2(ckod); 
+INSERT INTO cikk_hcl2t select * from cikk;
+
+CREATE CLUSTER cikk_hcl3 (ckod  NUMBER ) SINGLE TABLE HASHKEYS 30;
+
+
+/**************
+Information about objects created above in the data dictionary views:
+
+SELECT cluster_name, cluster_type, function, hashkeys, single_table
+FROM dba_clusters WHERE owner='NIKOVITS';
+cl_name        type    function        keys  single
+---------------------------------------------------
+CIKK_HCL       HASH    DEFAULT2         31    N
+CIKK_HCL2      HASH    HASH EXPRESSION  31    N
+CIKK_HCL3      HASH    DEFAULT2         31    Y
+PERSONNEL_CL   INDEX   null              0    N
+
+
+SELECT cluster_name, table_name FROM dba_tables 
+WHERE owner='NIKOVITS' AND cluster_name IS NOT NULL ORDER BY 1,2;
+cl_name       t_name
+--------------------------
+CIKK_HCL      CIKK_HCLT
+CIKK_HCL      SZALLIT_HCLT
+CIKK_HCL2     CIKK_HCL2T
+PERSONNEL_CL  DEPT_CLT
+PERSONNEL_CL  EMP_CLT
+
+
+SELECT cluster_name, clu_column_name, table_name, tab_column_name 
+FROM dba_clu_columns WHERE owner='NIKOVITS';
+cl_name       cl_col             t_name        tab_col 
+------------------------------------------------------
+CIKK_HCL      CKOD               CIKK_HCLT     CKOD
+CIKK_HCL      CKOD               SZALLIT_HCLT  CKOD
+CIKK_HCL2     CKOD               CIKK_HCL2T    CKOD
+PERSONNEL_CL  DEPARTMENT_NUMBER  DEPT_CLT      DEPTNO
+PERSONNEL_CL  DEPARTMENT_NUMBER  EMP_CLT       DEPTNO
+
+
+SELECT cluster_name, hash_expression 
+FROM dba_cluster_hash_expressions WHERE owner='NIKOVITS';
+cl_name      hash_expr
+--------------------------
+CIKK_HCL2    MOD(ckod, 53)
+
+
+Let's have a look at the object_id and data_object_id of the cluster and tables.
+We can see that only the cluster has data_object (segment) and the tables
+are stored on the cluster's data_object (segment).
+
+SELECT object_name, object_type, object_id, data_object_id 
+FROM dba_objects WHERE owner='NIKOVITS'
+AND (object_name LIKE 'CIKK_HCL' OR object_name LIKE '%_HCLT');
+
+object_name     object_type  object_id  data_object_id
+------------------------------------------------------
+SZALLIT_HCLT      TABLE      100652     100650
+CIKK_HCLT         TABLE      100651     100650
+CIKK_HCL          CLUSTER    100650     100650
+
+
+We can see that only the cluster has segment.
+
+SELECT segment_name, segment_type, bytes 
+FROM dba_segments WHERE owner='NIKOVITS'
+AND (segment_name LIKE 'CIKK_HCL' OR segment_name LIKE '%_HCLT');
+
+segment_name   segment_type   bytes
+------------------------------------
+CIKK_HCL       CLUSTER        589824
+
+************/

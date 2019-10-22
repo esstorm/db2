@@ -1,0 +1,82 @@
+-- Data dictionary views about partitioned tables and indexes:
+-- (DBA_PART_TABLES, DBA_PART_INDEXES, DBA_TAB_PARTITIONS, DBA_IND_PARTITIONS, 
+--  DBA_TAB_SUBPARTITIONS, DBA_IND_SUBPARTITIONS, DBA_PART_KEY_COLUMNS, DBA_SUBPART_KEY_COLUMNS
+--  DBA_SUBPARTITION_TEMPLATES)
+
+
+Partitioned table and index:
+
+CREATE TABLE szallit_part 
+  ( ckod  integer,
+    pkod  integer,
+    szkod integer, 
+    mennyiseg integer,
+    datum  date)
+PARTITION BY RANGE ( ckod )  
+  (PARTITION sz1 VALUES LESS THAN  ( 200 ), 
+   PARTITION sz2 VALUES LESS THAN  ( 500 ), 
+   PARTITION sz3 VALUES LESS THAN  ( 800 ),
+   PARTITION sz4 VALUES LESS THAN  ( MAXVALUE) )
+;
+
+-- Local partitioned index (prefixed). 
+-- Local means, 1-1 relationship between table and index partitions.
+-- That's why we cannot give partitioning aspects of the index.
+-- Prefixed means that the list of partitioning columns is a prefix of the list of indexed columns.
+CREATE INDEX loc_i ON szallit_part(ckod)
+LOCAL (PARTITION sz1_i,
+       PARTITION sz2_i,
+       PARTITION sz3_i,
+       PARTITION sz4_i)
+;
+
+-- Local partitioned index (not prefixed). 
+CREATE INDEX loc_i2 ON szallit_part(datum)
+LOCAL (PARTITION sz1_i2,
+       PARTITION sz2_i2,
+       PARTITION sz3_i2,
+       PARTITION sz4_i2)
+;
+
+-- Global (not local) partitioned index (prefixed)
+-- Partitioning columns: pkod, indexed columns: pkod, szkod
+
+CREATE INDEX glob_i ON szallit_part(pkod, szkod) 
+   GLOBAL PARTITION BY RANGE (pkod)
+     (PARTITION pkod_1 VALUES LESS THAN (10),
+      PARTITION pkod_2 VALUES LESS THAN (MAXVALUE))
+;
+
+
+Information about objects created above in the data dictionary views:
+---------------------------------------------------------------------
+
+SELECT table_name, index_name, partitioning_type, subpartitioning_type,
+  partition_count, locality, alignment
+FROM dba_part_indexes WHERE owner='NIKOVITS';
+
+table_name     i_name   p_type  sub_t  p_count  local    alignment
+--------------------------------------------------------------------
+SZALLIT_PART   GLOB_I   RANGE   NONE   2        GLOBAL   PREFIXED
+SZALLIT_PART   LOC_I    RANGE   NONE   4        LOCAL    PREFIXED
+SZALLIT_PART   LOC_I2   RANGE   NONE   4        LOCAL    NON_PREFIXED
+
+
+
+SELECT index_name, partition_position, partition_name, high_value
+FROM dba_ind_partitions WHERE index_owner='NIKOVITS' ORDER BY 1,2;
+
+i_name  p_pos  p_name   high_value
+---------------------------------
+GLOB_I   1     PKOD_1   10
+GLOB_I   2     PKOD_2   MAXVALUE
+LOC_I    1     SZ1_I    200
+LOC_I    2     SZ2_I    500
+LOC_I    3     SZ3_I    800
+LOC_I    4     SZ4_I    MAXVALUE
+LOC_I2   1     SZ1_I2   200
+LOC_I2   2     SZ2_I2   500
+LOC_I2   3     SZ3_I2   800
+LOC_I2   4     SZ4_I2   MAXVALUE
+
+

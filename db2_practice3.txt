@@ -1,0 +1,89 @@
+
+ROWID datatype format and meaning (see DBMS_ROWID package)
+--------------------------------------------------------------------
+
+18 characters in the following format: OOOOOOFFFBBBBBBRRR
+OOOOOO -  data object id  (dba_objets.data_object_id)
+FFF    -  file id         (dba_data_files.file_id)
+BBBBBB -  block number    (inside datafile)
+RRR    -  row number      (inside block)
+
+Encoded in Base64. 
+Correspondence of the digits (0-63):
+A-Z -> (0-25), a-z -> (26-51), 0-9 -> (52-61), '+' -> (62), '/' -> (63)
+
+eg. 'AAAAAB' -> 000001
+
+
+How many data blocks are allocated in the database for the table NIKOVITS.CIKK?
+There can be empty blocks, but we count them too.
+The same question: how many data blocks does the segment of the table have?
+
+How many filled data blocks does the previous table have?
+Filled means that the block is not empty (there is at least one row in it).
+This question is not the same as the previous !!!
+How many empty data blocks does the table have?
+
+How many rows are there in each block of the previous table?
+
+There is a table NIKOVITS.ELADASOK@ullman which has the following row:
+szla_szam = 100 (szla_szam is a column name)
+In which datafile is the given row stored?
+Within the datafile in which block? (block number) 
+In which data object? (Give the name of the segment.)
+-------------------------------------------------------
+Write a PL/SQL procedure which prints out the number of rows in each data block for the 
+following table: NIKOVITS.TABLA_123. The output has 3 columns: file_id, block_id, num_of_rows.
+CREATE OR REPLACE PROCEDURE num_of_rows IS 
+...
+Test:
+-----
+SET SERVEROUTPUT ON
+execute num_of_rows();
+
+Hint:
+Find the extents of the table. You can find the first block and the size in blocks.
+Check the individual blocks how many rows they contain. (use rowid)
+-------------------------------------------------------
+Write a PL/SQL procedure which counts and prints the number of empty blocks of a table.
+CREATE OR REPLACE PROCEDURE empty_blocks(p_owner VARCHAR2, p_table VARCHAR2) IS
+...
+Test:
+-----
+set serveroutput on
+execute empty_blocks('nikovits', 'employees');
+
+Hint: 
+Count the total number of blocks (see the segment), the filled blocks (use rowid), 
+the difference is the number of empty blocks.
+You have to use dynamic SQL statement in the PL/SQL program, see pl_dynamicSQL.txt
+-------------------------------------------------------
+
+B+ tree
+-------
+Build a B+ tree from the following keys. Insert the keys into the tree in the given order.
+39,15,50,70,79,83,72,43,75,45,60,80  
+Let's suppose that a node (block) can contain 3 keys and 4 pointers.
+For some help we show the first split of a block:
+
+                       15|39|50
+insert 70
+
+                          50
+                    15|39    50|70
+
+Hint:
+----
+
+When a leaf block overflows we split it into two. We put half of the keys into the first block,
+the other half into the second (new) one. We create a pointer pointing to the new block and put 
+this into the parent block with an appropriate key (preserving the B+ tree properties).
+
+When a non-leaf block overflows we split it into two. Half of the keys goes into the first one,
+the other half into the second one. But one key in the middle doesn't go into either of them.
+It goes up into the parent block with an appropriate pointer.
+
+If there is no parent block (when we split the root) we create a new root block having one key 
+(the one just going up) and the two pointers pointing to the just splitted parts.
+
+

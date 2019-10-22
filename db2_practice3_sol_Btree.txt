@@ -1,0 +1,49 @@
+B+ tree
+-------
+Build a B+ tree from the following keys. Insert the keys into the tree in the given order.
+39,15,50,70,79,83,72,43,75,45,60,80  
+Let's suppose that a node (block) can contain 3 keys and 4 pointers.
+
+
+                       15|39|50                <- 70
+
+                          50
+                    15|39    50|70             <- 79
+
+                          50
+                    15|39    50|70|79          <- 83
+
+                         50|79
+                15|39    50|70   79|83         <- 72,43
+
+                         50|79
+           15|39|43    50|70|72   79|83        <- 75
+
+                        50|72|79
+          15|39|43   50|70    72|75   79|83    <- 45 
+
+inserting 45 in two steps:
+
+1st
+                        43|50|72|79
+      15|39   43|45   50|70    72|75   79|83    
+
+2nd
+                           72
+                43|50               79
+      15|39   43|45   50|70    72|75   79|83    
+
+
+Hint:
+----
+
+When a leaf block overflows we split it into two. We put half of the keys into the first block,
+the other half into the second (new) one. We create a pointer pointing to the new block and put 
+this into the parent block with an appropriate key (preserving the B+ tree properties).
+
+When a non-leaf block overflows we split it into two. Half of the keys goes into the first one,
+the other half into the second one. But one key in the middle doesn't go into either of them.
+It goes up into the parent block with an appropriate pointer.
+
+If there is no parent block (when we split the root) we create a new root block having one key 
+(the one just going up) and the two pointers pointing to the just splitted parts.

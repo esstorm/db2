@@ -1,0 +1,89 @@
+-- Dynamic SQL
+================
+Dynamic SQL is a programming methodology for generating and running SQL
+statements at run time. It is useful when writing general-purpose and flexible
+programs like ad hoc query systems, when writing programs that must run database
+definition language (DDL) statements, or when you do not know at compilation time
+the full text of a SQL statement.
+
+set serveroutput on
+DECLARE
+ v_str VARCHAR2(2000);
+BEGIN
+  v_str :=  'CREATE TABLE dolgozo1 (dkod NUMBER(4) NOT NULL,'
+            || 'dnev VARCHAR2(30) NOT NULL,'
+            || 'foglalkozas VARCHAR2(30),'
+            || 'belepes DATE,'
+            || 'fizetes NUMBER(7,2))';
+  EXECUTE IMMEDIATE v_str;
+EXCEPTION
+  WHEN OTHERS THEN dbms_output.put_line(sqlcode||' -- '||sqlerrm);
+END;
+/
+
+-- Implicit cursor attributes can be used -> SQL%ROWCOUNT
+-- before running -> create table emp1 as select * from emp where 1=2;
+set serveroutput on
+DECLARE
+ v_str VARCHAR2(2000);
+BEGIN
+  v_str :=  'INSERT INTO emp1 (empno, ename, job, hiredate, sal)'
+            ||' SELECT empno, ename, job, hiredate, sal FROM emp'
+            ||' WHERE empno IN (7900, 7902)';
+  EXECUTE IMMEDIATE v_str;
+  dbms_output.put_line(SQL%ROWCOUNT ||' rows inserted ');
+EXCEPTION
+  WHEN OTHERS THEN dbms_output.put_line(sqlcode||' -- '||sqlerrm);
+END;
+/
+--------------
+2 rows inserted
+
+
+-- Placeholders
+set serveroutput on
+DECLARE
+ v_str     VARCHAR2(2000);
+ v_ename   emp.ename%TYPE;
+ v_sal     emp.sal%TYPE;
+ v_empno   emp.empno%TYPE := 7900;
+BEGIN
+  v_str :=  'SELECT ename, sal FROM emp WHERE empno = :x AND ename = :y';
+  EXECUTE IMMEDIATE v_str INTO v_ename, v_sal USING v_empno, 'JAMES';
+  dbms_output.put_line(v_ename||' -- '||v_sal);
+EXCEPTION
+  WHEN OTHERS THEN dbms_output.put_line(sqlcode||' -- '||sqlerrm);
+END;
+/
+------------
+JAMES -- 950
+
+
+-- Several rows from a SELECT -> using cursor
+set serveroutput on
+DECLARE
+  TYPE CurTyp  IS REF CURSOR;
+  v_cursor  CurTyp;
+  rec       emp%ROWTYPE;
+  v_str     VARCHAR2(200);
+BEGIN
+  v_str := 'SELECT * FROM emp WHERE job = :x';
+  OPEN v_cursor FOR v_str USING 'SALESMAN';
+  LOOP
+    FETCH v_cursor INTO rec;
+    EXIT WHEN v_cursor%NOTFOUND;
+    dbms_output.put_line(rec.ename);
+  END LOOP;
+  CLOSE v_cursor;
+END;
+/
+------
+ALLEN
+WARD
+MARTIN
+TURNER
+
+
+
+
+

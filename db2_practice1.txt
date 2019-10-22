@@ -1,0 +1,57 @@
+Give the SELECT statements and the results for the following queries.
+
+Database objects
+----------------
+(DBA_OBJECTS)
+
+Who is the owner of the view DBA_TABLES? Who is the owner of table DUAL?
+
+Who is the owner of synonym DBA_TABLES? (or synonym DUAL)
+
+What kind of objects the database user ORAUSER has? (dba_objects.object_type column)
+
+What are the object types existing in the database?
+
+Which users have more than 10 different kind of objects in the database?
+
+Which users have both triggers and views in the database?
+
+Which users have views but don't have triggers?
+
+Which users have more than 40 tables, but less than 30 indexes?
+
+Let's see the difference between a table and a view (dba_objects.data_object_id).
+
+Which object types have NULL (or 0) in the column data_object_id?
+
+Which object types have non NULL (and non 0) in the column data_object_id?
+
+What is the intersection of the previous 2 queries?
+
+
+
+Columns of a table
+------------------
+(DBA_TAB_COLUMNS)
+
+How many columns nikovits.emp table has?
+
+What is the data type of the 6th column of the table nikovits.emp?
+
+Give the owner and name of the tables which have column name beginning with letter 'Z'.
+
+Give the owner and name of the tables which have at least 8 columns with data type DATE.
+
+Give the owner and name of the tables whose 1st and 4th column's datatype is VARCHAR2.
+
+
+Write a PL/SQL procedure, which prints out the owners and names of the tables beginning with the 
+parameter character string. 
+CREATE OR REPLACE PROCEDURE table_print(p_char VARCHAR2) IS
+...
+set serveroutput on
+execute table_print('V');
+
+
+
+

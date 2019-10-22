@@ -1,0 +1,90 @@
+Database II. Lecture and Practice
+=================================
+
+Before the 1st lecture 
+----------------------
+Technical information about the databases. Client software: SqlDeveloper.
+Connecting to Oracle database server. 
+Overview of the topics of the semester, basic info about the tests (practice) and exam (lecture).
+(db2_readme.txt)
+
+This course is based on Database I course, for which you can find material on my homepage:
+http://people.inf.elte.hu/nikovits/DB1/
+
+Some review of SQL, PL/SQL
+Recursion in queries (see Database1 course, db1_recursion.txt)
+db2_practice0.txt
+
+
+1st lecture
+-----------
+Architecture of a DBMS. Oracle architecture: instance, database files
+Schema, schema objects, Data dictionary views
+Tablespace, datafile, segment, extent, data block
+(01_Oracle_architecture.pptx, 01_Oracle_storage.pptx, 01_Oracle_concepts.docx)
+
+Practice:
+db2_practice1.txt
+
+2nd lecture
+-----------
+Physical storage organization; Physical storage media types (memory, disk, tape)
+How do disks work? RAID technology; Buffer management;
+Page organization, record organization;
+Unordered files (heap), ordered files, hashed files (a brief overview)
+(02_storage.ppt, 02_RAID.doc, 02_Select_execution.ppt, 02_UW_File_structure.ppt)
+
+Practice:
+db2_practice2.txt, data_dictionary.txt, db2_help.txt
+
+3rd lecture
+-----------
+Indexing; Sparse index, dense index, primary index, secondary index;
+Multi-level index, B+ tree;
+Difference between a B tree and a B+ tree.
+(03_UW_Indexing.ppt, 03_B_tree.doc)
+
+Practice:
+Using dynamic SQL statements in PL/SQL (pl_dynamicSQL.txt)
+db2_practice3.txt, db2_help.txt
+
+4th lecture
+-----------
+Hashing; Static hashing; Dynamic hashing; Linear hashing, Extensible hashing
+(04_UW_Hashing.ppt, 04_Oracle_concepts2.docx, 04_Dynamic_hashing.doc)
+Bitmap index (04_Bitmap_indexes.ppt)
+
+Practice:
+db2_practice4.txt, 04_cr_index.txt, db2_oracle_examples.doc, 
+
+5th lecture
+-----------
+Query processing and optimization. Cost of operations.
+Algorithms based on sorting; Nested-loop joins; Index-based join;
+Sort-Merge join; Hash-join;
+(05_optimization.ppt, 05_operation_cost_examples.ppt, 05_special_storage.ppt) 
+
+Practice:
+db2_practice5.txt
+cr_part_table.txt, cr_cluster.txt, cr_part_index.txt (see 05_special_storage.ppt)
+
+6th lecture
+-----------
+Query optimization. Relational algebra transformations, size estimation.
+(06_UW_query_processing.ppt)
+
+Practice:
+Completing db2_practice0.txt and recursion in queries
+db2_practice6.txt
+
+7th lecture
+-----------
+execution plans and hints (07_tuning.ppt)
+(07_expl.txt, 07_execution_plans1.txt, 07_execution_plans2.txt, 
+07_execution_plans3.txt, 07_execution_plans4.txt, 07_hints.txt)
+
+Practice:
+1st Test -> november 12th
+
+
+

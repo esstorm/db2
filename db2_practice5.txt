@@ -1,0 +1,59 @@
+1. exercise 
+-----------
+We have a table R, I1 dense index and I2 sparse index with the following parameters:
+T(R) = 10000, bf(R) = 20, bf(I1) = 100, bf(I2) = 100
+Give the following:
+B(R)  = ?
+B(I1) = ?  (I1 dense !)
+B(I2) = ?  (I2 sparse !)
+
+
+2. exercise 
+-----------
+Give the values in the previous exercise, if the data blocks can be filled 80% full.
+
+
+3. exercise 
+-----------
+T(R) = 1000000, bf(R) = 20, we build a B+ tree index on a key column for which bf(I) = 50. 
+Give the following:
+B(I) = ?    (help: examine the index level by level)
+
+What is the cost (in block reads) of an A = c type search (worst case) if
+a) the table is stored unordered and we don't use index;
+b) the table is stored ordered and we don't use index;
+c) we use the above B+ tree index. 
+
+
+4. exercise (05_optimization.ppt, page 11.)
+-----------
+Let's consider relation R with the following parameters:
+T(R)=1000000, block size = 4096 bytes, L(R)=128 bytes, V(R,A)=500, and let W the result
+of the following query:
+W <-- SELECT c1,c2,c3 FROM R WHERE A=x;
+Compute B(R) and B(W) if L(W)=64 bytes.
+
+
+5. exercise  (05_optimization.ppt, page 21.)
+-----------  
+Let's suppose we have a memory size 101 blocks (M=101), and have a table R, where B(R)=1000000.
+What is the cost (in block I/O) of a sort operation?
+
+
+6. exercise  (05_optimization.ppt, a) -> p. 28-29., b) -> p. 32., c) -> p. 21. and 31.)
+-----------  
+Let's suppose we have a memory size 101 blocks (M=101), and have a 1000000 rows table R
+T(R) = 1000000, whose bf(R) = 10, and a 60000 rows table, T(S) = 60000, whose bf(S) = 12. 
+What is the cost (in block read/write) of an equijoin (WHERE R.A = S.A) operation in case of:
+a) block-nested loop algorithm (see: an improvement on slides)
+b) hash-join algorithm
+c) sort-merge join algorithm
+
+
+7. exercise  (05_optimization.ppt, p. 30.)
+-----------  
+What is the I/O cost of an index-join of the two tables in the previous exercise, 
+if we have an index on R (we keep the index in the memory), R is not clustered and
+a) V(R,A) = 1000000
+b) V,R,A) = 10000
+

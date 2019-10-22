@@ -1,0 +1,47 @@
+/* How many filled data blocks does the previous table have?
+Filled means that the block is not empty (there is at least one row in it).
+How many empty data blocks does the table have? */
+
+SELECT DISTINCT dbms_rowid.rowid_relative_fno(ROWID) file_id,
+ dbms_rowid.rowid_object(ROWID) data_object,
+dbms_rowid.rowid_block_number(ROWID) block_nr
+FROM nikovits.cikk;
+
+/* -- The number of these data blocks: */
+
+SELECT count(*) FROM
+(SELECT DISTINCT dbms_rowid.rowid_relative_fno(ROWID) file_id,
+ dbms_rowid.rowid_object(ROWID) data_object,
+dbms_rowid.rowid_block_number(ROWID) block_nr
+ FROM nikovits.cikk);
+
+/* How many rows are there in each block of the previous table? */
+
+SELECT dbms_rowid.rowid_relative_fno(ROWID) file_no,
+       dbms_rowid.rowid_block_number(ROWID) block_no, count(*)
+FROM nikovits.cikk
+GROUP BY dbms_rowid.rowid_block_number(ROWID),
+dbms_rowid.rowid_relative_fno(ROWID);
+
+/* There is a table NIKOVITS.ELADASOK@ullman which has the following row:
+szla_szam = 100 (szla_szam is a column name)
+In which datafile is the given row stored?
+Within the datafile in which block? (block number)
+In which data object? (Give the name of the segment.) */
+
+SELECT dbms_rowid.rowid_relative_fno(ROWID) file_id,
+dbms_rowid.rowid_object(ROWID) data_object,
+dbms_rowid.rowid_block_number(ROWID) block_nr,
+dbms_rowid.rowid_row_number(ROWID) row_nr
+FROM nikovits.eladasok WHERE szla_szam = 100;
+
+SELECT * FROM dba_data_files WHERE file_id=2;
+SELECT * FROM dba_objects WHERE data_object_id=127712;
+
+/* -- We combine the previous two together: */
+SELECT dbms_rowid.rowid_relative_fno(e.ROWID) file_id, f.file_name
+FROM nikovits.eladasok e, dba_data_files f
+WHERE szla_szam = 100 AND dbms_rowid.rowid_relative_fno(e.ROWID)=f.file_id;
+
+SET SERVEROUTPUT ON
+execute num_of_rows();

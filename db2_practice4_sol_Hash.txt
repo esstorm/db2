@@ -1,0 +1,137 @@
+Extensible hash table
+---------------------
+The size of the bucket array is always a power of 2.
+Let's suppose we can put two records into a block, k=4 (the hash function computes k bits), 
+i=1 (the bucket numbers use the first i bits); j (in the nub of the blocks) indicates how many bits of 
+the hash function's sequence is used in this block. 
+
+i=1
+     ----      0001
+ 0   | -|--->  ----1
+     |  |     
+ 1   | -|--->  1001
+     ----      1100
+               ----1 
+  
+  bucket dir   blocks
+
+Insert the following values into the hash table 
+
+0011, 0110, 1011, 0111, 1110, 1111, 0100
+
+
+i=1            0011
+    ----       0001
+0   | -|--->   ----1 
+    |  | 
+1   | -|--->   1001 
+    ----       1100 
+               ----1 
+ 
+
+
+i=2            0011
+    ----       0001
+00  | -|--->   ----2  0110
+01  | -|----->        ----2
+10  | -|---\   1001    
+11  | -|---/   1100
+    ----       ----1
+                
+
+
+i=2            0011
+    ----       0001   0111
+00  | -|--->   ----2  0110   1011
+01  | -|----->        ----2  1001   1110
+10  | -|------->             ----2  1100 
+11  | -|--------->                  ----2
+    ----                
+
+
+
+i=3            
+    ----       0011   
+000 | -|---\   0001     
+001 | -|---/   ----2  0100   0111 
+010 | -|----->        ----3  0110    
+011 | -|------->             ----3  1011 
+100 | -|---\                        1001  
+101 | -|---/                        ----2  1100   1110
+110 | -|--------->                         ----3  1111
+111 | -|----------->                              ----3
+    ----
+
+
+
+A litthe hint:
+-------------
+
+To insert a record with search key K , we compute h(K ), take the first i bits of this bit sequence, 
+and go to the entry of the bucket array indexed by these i bits, then follow the pointer in this entry
+and arrive at a block B. If there is no room in the block B we do the following:
+1. If j < i we split B into two; distribute records in B to the two blocks based on the (j+1)st bit;
+   put j+1 into the block's nub; adjust the pointers in the bucket array 
+2. If j = i we increment i by 1; double the length of the bucket array; put new pointers into the array;
+   finally we proceed to split block B as in case 1.
+
+
+
+
+Linear hash table
+-----------------
+Let's suppose we can put two records into a block and the blocks contain the following records:
+
+0000   0101
+1110   
+----   ----   
+ 0      1    
+
+n = 2 (the current number of buckets); i = 1 (we use the last i bits from the sequence)
+r/n = 2.4 (predefined threshold, where r is the current number of records)
+
+Insert the following values into the hash table 
+
+0001, 0110, 1011, 0111, 1100, 1111, 0100
+
+
+
+0000   0101
+1110   0001
+____   ____   
+ 0      1  
+
+       0111
+       1011
+       ----
+       0101   1110 
+0000   0001   0110
+____   ____   ____   
+ 00     01     10
+
+                     1111
+                     ----
+1100   0101   1110   1011
+0000   0001   0110   0111
+____   ____   ____   ____   
+ 00     01     10     11 
+
+
+                     1111
+                     ----
+       0101   1110   1011   0100
+0000   0001   0110   0111   1100
+____   ____   ____   ____   ____   
+ 000    001    010    011    100
+
+
+A little hint:
+-------------
+
+To insert a record with search key K , we compute h(K ), take the last i bits of this bit sequence.
+If a bucket with this number (last i bits) exists, we put the record in it. If there is no room
+in the last block of this bucket, we chain a new block to the bucket.
+If the bucket with this number (last i bits) doesn't exist, we put the record in the bucket
+which differs in the first bit.
+If r/n is greater than a threshold, we add a new bucket to the structure.
+If n exceeds 2**i we increment i by 1. 

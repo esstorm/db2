@@ -1,0 +1,78 @@
+1. create PLAN_TABLE  -> running utlxplan.sql script
+   /opt/oracle/product/11.2/db_1/rdbms/admin/utlxplan.sql
+   content of the script -> see below
+
+2. Execution plan into PLAN_TABLE:
+  EXPLAIN PLAN SET statement_id='st1'  -- 'st1' -> unique name of the statement
+  FOR 
+  SELECT deptno, AVG(sal) FROM emp GROUP BY deptno HAVING SUM(sal) > 9000
+  ORDER BY AVG(sal) DESC;
+
+3. A hierarchical query to see the tree structure
+
+SELECT LPAD(' ', 2*(level-1))||operation||' + '||options||' + '
+  ||object_owner||nvl2(object_owner,'.','')||object_name xplan
+FROM plan_table
+START WITH id = 0 AND statement_id = 'st1'                 -- 'st1' -> unique name of the statement
+CONNECT BY PRIOR id = parent_id AND statement_id = 'st1'   -- 'st1' -> again
+ORDER SIBLINGS BY position;
+
+an other variant (50 characters only -> SUBSTR)
+
+SELECT SUBSTR(LPAD(' ', 2*(LEVEL-1))||operation||' + '||options||' + '||object_name, 1, 50) terv,
+  cost, cardinality, bytes, io_cost, cpu_cost
+FROM plan_table
+START WITH ID = 0 AND STATEMENT_ID = 'st1'                 -- 'st1' -> unique name of the statement
+CONNECT BY PRIOR id = parent_id AND statement_id = 'st1'   -- 'st1'
+ORDER SIBLINGS BY position;
+
+or another
+
+select plan_table_output from table(dbms_xplan.display('plan_table','st1','all'));
+parameters: table_name, statement_id, plan_details (basic, typical, all, serial) 
+
+
+-------------------------------
+Content of utlxplan.sql script:
+-------------------------------
+create table PLAN_TABLE (
+        statement_id       varchar2(30),
+        plan_id            number,
+        timestamp          date,
+        remarks            varchar2(4000),
+        operation          varchar2(30),
+        options            varchar2(255),
+        object_node        varchar2(128),
+        object_owner       varchar2(30),
+        object_name        varchar2(30),
+        object_alias       varchar2(65),
+        object_instance    numeric,
+        object_type        varchar2(30),
+        optimizer          varchar2(255),
+        search_columns     number,
+        id                 numeric,
+        parent_id          numeric,
+        depth              numeric,
+        position           numeric,
+        cost               numeric,
+        cardinality        numeric,
+        bytes              numeric,
+        other_tag          varchar2(255),
+        partition_start    varchar2(255),
+        partition_stop     varchar2(255),
+        partition_id       numeric,
+        other              long,
+        distribution       varchar2(30),
+        cpu_cost           numeric,
+        io_cost            numeric,
+        temp_space         numeric,
+        access_predicates  varchar2(4000),
+        filter_predicates  varchar2(4000),
+        projection         varchar2(4000),
+        time               numeric,
+        qblock_name        varchar2(30),
+        other_xml          clob
+);
+
+
+

@@ -1,0 +1,227 @@
+Further execution plans
+
+-------------------------------------------------------------------------------------------
+The owner of the following tables is NIKOVITS.
+
+CIKK(ckod, cnev, szin, suly)             meaning: PRODUCT(prod_id, name, color, weight)
+SZALLITO(szkod, sznev, statusz, telephely)        SUPPLIER(supl_id, name, status, address)
+PROJEKT(pkod, pnev, helyszin)                     PROJECT(proj_id, name, address)
+SZALLIT(szkod, ckod, pkod, mennyiseg, datum)      SUPPLY(supl_id, prod_id, proj_id, amount, date)
+
+The Hungarian table names are on the left side, but you can use the English view names on the right.
+The tables have indexes too.
+
+CREATE OR REPLACE VIEW product(prod_id, name, color, weight) AS SELECT * FROM nikovits.cikk;
+CREATE OR REPLACE VIEW supplier(supl_id, name, status, address) AS SELECT * FROM nikovits.szallito;
+CREATE OR REPLACE VIEW project(proj_id, name, address) AS SELECT * FROM nikovits.projekt;
+CREATE OR REPLACE VIEW supply(supl_id, prod_id, proj_id, amount, sDate) AS SELECT * FROM nikovits.szallit;
+GRANT select on product to public;
+GRANT select on supplier to public;
+GRANT select on project to public;
+GRANT select on supply to public;
+--------------------------------------------------------------------------------------------
+                                                                         x
+PLAN_TABLE.position column shows the children                           / \
+                                                                       /   \
+                                                                      1     2
+
+-- Cannot use index (because of '+1', which is an expression and not the column itself)
+select sum(suly) from nikovits.cikk where ckod+1=2;
+select sum(weight) from nikovits.product where prod_id+1=2;
+---------------------------------------------------
+SELECT STATEMENT      
+  SORT  AGGREGATE    
+    TABLE ACCESS  FULL  CIKK  
+
+-- uses index
+select sum(suly) from nikovits.cikk where ckod=floor(sqrt(44*23));
+select sum(weight) from nikovits.product where prod_id=floor(sqrt(44*23));
+---------------------------------------------------------
+SELECT STATEMENT      
+  SORT  AGGREGATE    
+    TABLE ACCESS  BY INDEX ROWID  CIKK  
+      INDEX  UNIQUE SCAN  C_CKOD  
+
+
+-- Index usage depends on selection cardinality
+-- no index usage
+select sum(suly) from nikovits.cikk where ckod < 300;
+select sum(weight) from nikovits.product where prod_id < 300;
+--------------------------------------------
+SELECT STATEMENT      
+  SORT  AGGREGATE    
+    TABLE ACCESS  FULL  CIKK  
+
+-- uses index
+select sum(suly) from nikovits.cikk where ckod < 10;
+select sum(weight) from nikovits.product where prod_id < 10;
+-------------------------------------------
+SELECT STATEMENT      
+  SORT  AGGREGATE    
+    TABLE ACCESS  BY INDEX ROWID  CIKK  
+      INDEX  RANGE SCAN  C_CKOD  
+
+
+SELECT szallito.szkod, projekt.pkod, telephely
+FROM szallito, szallit, projekt
+WHERE szallit.szkod=szallito.szkod
+AND szallit.pkod=projekt.pkod
+AND telephely=helyszin
+GROUP BY szallito.szkod, projekt.pkod, telephely
+HAVING SUM(mennyiseg) > 5000;
+---------------------------------------------------------------
+SELECT STATEMENT
+  FILTER      
+    SORT  GROUP BY    
+      NESTED LOOPS      
+        NESTED LOOPS      
+          TABLE ACCESS  FULL  PROJEKT  
+          TABLE ACCESS  BY INDEX ROWID  SZALLIT  
+            INDEX  RANGE SCAN  SZT_PKOD  
+        TABLE ACCESS  BY INDEX ROWID  SZALLITO  
+          INDEX  UNIQUE SCAN  SZO_SZKOD  
+
+
+
+SELECT szallito.szkod, projekt.pkod, telephely
+FROM szallito, szallit, projekt, cikk
+WHERE szallit.szkod=szallito.szkod
+AND szallit.pkod=projekt.pkod
+AND szallit.ckod=cikk.ckod
+AND szin='piros'
+AND telephely=helyszin
+GROUP BY szallito.szkod, projekt.pkod, telephely
+HAVING SUM(mennyiseg) > 500;
+----------------------------------------------------------------
+SELECT STATEMENT
+  FILTER      1
+    SORT  GROUP BY    1
+      NESTED LOOPS      1
+        NESTED LOOPS      1
+          NESTED LOOPS      1
+            TABLE ACCESS  BY INDEX ROWID  CIKK  1
+              INDEX  RANGE SCAN  C_SZIN  1
+            TABLE ACCESS  BY INDEX ROWID  SZALLIT  2
+              INDEX  RANGE SCAN  SZT_CKOD  1
+          TABLE ACCESS  BY INDEX ROWID  PROJEKT  2
+            INDEX  UNIQUE SCAN  P_PKOD  1
+        TABLE ACCESS  BY INDEX ROWID  SZALLITO  2
+          INDEX  UNIQUE SCAN  SZO_SZKOD  1
+
+-- another plan
+SELECT STATEMENT
+  FILTER
+    HASH GROUP BY
+      NESTED LOOPS
+        NESTED LOOPS
+          HASH JOIN
+            TABLE ACCESS FULL CIKK
+            TABLE ACCESS FULL SZALLIT
+          TABLE ACCESS BY INDEX ROWID SZALLITO
+            INDEX UNIQUE SCAN SZO_SZKOD
+        TABLE ACCESS BY INDEX ROWID PROJEKT
+
+
+
+-- some plans with cluster
+create cluster ckod_cl(ckod integer);
+create index ckod_i on cluster ckod_cl;
+create table cikk_ind_cl(...) cluster ckod_cl(ckod);
+create table szallit_ind_cl(...) cluster ckod_cl(ckod);
+
+...
+-----------------------------------------------------------
+SELECT STATEMENT
+  SORT  AGGREGATE    1
+    NESTED LOOPS      1
+      TABLE ACCESS  BY INDEX ROWID  CIKK_IND_CL  1
+        INDEX  RANGE SCAN  C_SZIN1  1
+      TABLE ACCESS  CLUSTER  SZALLIT_IND_CL  2
+
+-- another plan
+SELECT STATEMENT
+  SORT AGGREGATE
+    NESTED LOOPS
+      TABLE ACCESS FULL CIKK_IND_CL
+      TABLE ACCESS CLUSTER SZALLIT_IND_CL
+        INDEX UNIQUE SCAN CKOD_I
+
+
+-- two tables in a hash cluster 
+create cluster ckod_hash(ckod integer);
+create table cikk_hash_cl(...) cluster ckod_hash(ckod);
+create table szallit_hash_cl(...) cluster ckod_hash(ckod);
+...
+-------------------------------------------------------------
+SELECT STATEMENT
+  SORT  AGGREGATE    1
+    NESTED LOOPS      1
+      TABLE ACCESS  BY INDEX ROWID  CIKK_HASH_CL  1
+        INDEX  RANGE SCAN  SZIN_2  1
+      TABLE ACCESS  HASH  SZALLIT_HASH_CL  2
+
+-- another plan
+ SELECT STATEMENT
+   SORT AGGREGATE
+     NESTED LOOPS
+       TABLE ACCESS FULL CIKK_HASH_CL
+       TABLE ACCESS HASH SZALLIT_HASH_CL
+
+-- Reading from a hash cluster
+select * from szallit_hash_cl where ckod=1;
+-------------------------------------------
+SELECT STATEMENT
+  TABLE ACCESS HASH SZALLIT_HASH_CL
+
+
+-- Using two indexes for a table.
+AND-EQUAL -> intersection of ROWIDs
+select sum(mennyiseg) from nikovits.szallit where ckod=9 and szkod=9;
+select sum(amount) from nikovits.supply where prod_id=9 and supl_id=9;
+------------------------------------------------------------
+SELECT STATEMENT
+  SORT AGGREGATE
+    TABLE ACCESS BY INDEX ROWID SZALLIT
+      AND-EQUAL
+        INDEX RANGE SCAN SZT_CKOD
+        INDEX RANGE SCAN SZT_SZKOD
+
+
+-- Using bit-vectors
+select sum(mennyiseg) from nikovits.szallit where ckod=9 and szkod=9;
+select sum(amount) from nikovits.supply where prod_id=9 and supl_id=9;
+------------------------------------------------------------
+SELECT STATEMENT
+  SORT AGGREGATE
+    TABLE ACCESS BY INDEX ROWID SZALLIT
+      BITMAP CONVERSION TO ROWIDS
+        BITMAP AND
+          BITMAP CONVERSION FROM ROWIDS
+            INDEX RANGE SCAN SZT_CKOD
+          BITMAP CONVERSION FROM ROWIDS
+            INDEX RANGE SCAN SZT_SZKOD
+
+
+-- Two equivalent plans can give different runtime.
+select sum(mennyiseg) from nikovits.cikk, nikovits.szallit where cikk.ckod < 999;
+select sum(amount) from nikovits.product p, nikovits.supply s where p.prod_id < 999;
+--------------------------------------------------------------
+SELECT STATEMENT
+  SORT  AGGREGATE    1
+    NESTED LOOPS      1
+      TABLE ACCESS  FULL  SZALLIT  1
+      TABLE ACCESS  FULL  CIKK  2
+
+If we give ckod > 999, it will be faster, though the plan is the same
+
+-- SORT AGGREGATE (above) is much cheaper than SORT ORDER BY (below).
+select * from nikovits.cikk c, nikovits.szallit s order by c.ckod
+select * from nikovits.product p, nikovits.supply s order by p.prod_id;
+------------------------------------------------
+ SELECT STATEMENT
+   SORT ORDER BY
+     NESTED LOOPS
+       TABLE ACCESS FULL SZALLIT
+       TABLE ACCESS FULL CIKK
+
+

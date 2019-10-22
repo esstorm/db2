@@ -1,0 +1,80 @@
+select * from nikovits.parentof;
+
+SELECT   LPAD(' ', 2*(LEVEL-1)) || name, parent, money
+FROM nikovits.parentof
+START WITH   name='ADAM'
+CONNECT BY  PRIOR name = parent;
+
+set serveroutput on
+execute rich_descendant();
+
+SELECT  LPAD(' ', 2*(LEVEL-1)) || name, parent, city, CONNECT_BY_ROOT city
+FROM nikovits.parentof
+WHERE city = CONNECT_BY_ROOT city
+START WITH  name='ADAM'
+CONNECT BY  PRIOR name = parent;
+
+SELECT  name, SYS_CONNECT_BY_PATH(name,'.'), SYS_CONNECT_BY_PATH(city,'.')
+FROM nikovits.parentof
+START WITH  name='ADAM'
+CONNECT BY  PRIOR name = parent;
+
+// create plan_table //
+
+select * from plan_table;
+
+ SELECT deptno, AVG(sal) FROM emp GROUP BY deptno HAVING SUM(sal) > 9000
+  ORDER BY AVG(sal) DESC;
+
+EXPLAIN PLAN SET statement_id='st1'
+ FOR
+ SELECT deptno, AVG(sal) FROM nikovits.emp GROUP BY deptno HAVING
+SUM(sal) > 9000
+ ORDER BY AVG(sal) DESC;
+
+SELECT LPAD(' ', 2*(level-1))||operation||' + '||options||' + '
+  ||object_owner||nvl2(object_owner,'.','')||object_name xplan
+FROM plan_table
+START WITH id = 0 AND statement_id = 'st1'                 -- 'st1' ->
+unique name of the statement
+CONNECT BY PRIOR id = parent_id AND statement_id = 'st1'   -- 'st1' -> again
+ORDER SIBLINGS BY position;
+
+SELECT SUBSTR(LPAD(' ', 2*(LEVEL-1))||operation||' + '||options||' +
+'||object_name, 1, 50) terv,
+  cost, cardinality, bytes, io_cost, cpu_cost
+FROM plan_table
+START WITH ID = 0 AND STATEMENT_ID = 'st1'                 -- 'st1' ->
+unique name of the statement
+CONNECT BY PRIOR id = parent_id AND statement_id = 'st1'   -- 'st1'
+ORDER SIBLINGS BY position;
+
+CREATE TABLE Flight(airline VARCHAR2(10), orig VARCHAR2(15), dest
+VARCHAR2(15), cost NUMBER);
+
+INSERT INTO flight VALUES('Lufthansa', 'San Francisco', 'Denver', 1000);
+INSERT INTO flight VALUES('Lufthansa', 'San Francisco', 'Dallas', 10000);
+INSERT INTO flight VALUES('Lufthansa', 'Denver', 'Dallas', 500);
+INSERT INTO flight VALUES('Lufthansa', 'Denver', 'Chicago', 2000);
+INSERT INTO flight VALUES('Lufthansa', 'Dallas', 'Chicago', 600);
+INSERT INTO flight VALUES('Lufthansa', 'Dallas', 'New York', 2000);
+INSERT INTO flight VALUES('Lufthansa', 'Chicago', 'New York', 3000);
+INSERT INTO flight VALUES('Lufthansa', 'Chicago', 'Denver', 2000);
+
+select * from Flight;
+
+SELECT LPAD(' ', 4*level) ||orig, dest, level-1 turnovers
+FROM flight
+START WITH orig = 'San Francisco'
+CONNECT BY NOCYCLE PRIOR dest = orig; // ADDED NOCYCLE
+
+SELECT distinct CONNECT_BY_ROOT orig AS orig, dest AS dest
+FROM flight
+WHERE CONNECT_BY_ROOT orig <> dest
+START WITH 1=1                    -- we start recursion from all nodes
+CONNECT BY NOCYCLE PRIOR dest = orig
+ORDER BY orig, dest;
+
+// go though practice 6 sol exercises
+
+// finish the exercises in practice 0

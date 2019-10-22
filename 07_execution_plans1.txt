@@ -1,0 +1,243 @@
+
+SELECT * FROM emp; 
+SELECT ename FROM emp; (projekció)
+SELECT ename FROM emp WHERE ename='JONES';  -- (where)
+------------------------------------------
+SELECT STATEMENT
+  TABLE ACCESS FULL EMP
+
+SELECT DISTINCT deptno FROM emp;   -- (distinct)
+--------------------------------
+SELECT STATEMENT
+  HASH UNIQUE
+    TABLE ACCESS FULL EMP
+
+-- another plan (if we put ORDER BY by deptno)
+SELECT STATEMENT 
+  SORT  UNIQUE   
+    TABLE ACCESS  FULL  EMP
+
+SELECT ename FROM emp ORDER BY deptno;   -- (order by)
+--------------------------------------
+SELECT STATEMENT
+  SORT ORDER BY
+    TABLE ACCESS FULL EMP
+
+SELECT deptno, AVG(sal) FROM emp GROUP BY deptno;  -- (group by)
+-------------------------------------------------
+SELECT STATEMENT
+  HASH  GROUP BY
+    TABLE ACCESS  FULL  EMP
+
+-- another plan
+SELECT STATEMENT
+  SORT GROUP BY
+    TABLE ACCESS FULL EMP
+
+SELECT deptno, AVG(sal) FROM emp GROUP BY deptno   -- (having)
+HAVING SUM(sal) > 3000; 
+-------------------------------------------------
+SELECT STATEMENT
+  FILTER
+    HASH GROUP BY
+      TABLE ACCESS FULL EMP
+
+-- another plan
+SELECT STATEMENT
+  FILTER      
+    SORT  GROUP BY    
+      TABLE ACCESS  FULL  EMP
+
+
+SELECT ename, dname FROM emp, dept 
+WHERE emp.deptno=dept.deptno;        -- (join)
+----------------------------------
+SELECT STATEMENT      
+  HASH JOIN      
+    TABLE ACCESS  FULL  DEPT
+    TABLE ACCESS  FULL  EMP 
+
+-- another plan
+SELECT STATEMENT
+  MERGE JOIN
+    SORT JOIN
+      TABLE ACCESS FULL DEPT
+    SORT JOIN
+      TABLE ACCESS FULL EMP
+
+-- and another ...
+SELECT STATEMENT            
+  NESTED LOOPS              
+    TABLE ACCESS FULL DEPT
+    TABLE ACCESS FULL EMP   
+
+
+SELECT deptno FROM emp  UNION  SELECT deptno FROM dept;  -- (union)
+-------------------------------------------------------
+SELECT STATEMENT
+   SORT UNIQUE
+     UNION-ALL
+       TABLE ACCESS FULL EMP
+       TABLE ACCESS FULL DEPT
+
+SELECT deptno FROM emp  UNION  ALL SELECT deptno FROM dept;  -- (union all) 
+-----------------------------------------------------------
+SELECT STATEMENT
+  UNION-ALL
+    TABLE ACCESS FULL EMP
+    TABLE ACCESS FULL DEPT
+
+
+SELECT deptno FROM emp  MINUS  SELECT deptno FROM dept;   -- (minus) 
+-------------------------------------------------------
+SELECT STATEMENT
+  MINUS
+    SORT UNIQUE
+      TABLE ACCESS FULL EMP
+    SORT UNIQUE
+      TABLE ACCESS FULL DEPT
+
+
+SELECT ename FROM emp WHERE deptno IN
+   (SELECT deptno FROM dept WHERE loc='DALLAS');  -- (IN)
+------------------------------------------------
+SELECT STATEMENT
+   MERGE JOIN
+     SORT JOIN
+       TABLE ACCESS FULL EMP
+     SORT JOIN
+       VIEW  VW_NSO_1
+         SORT UNIQUE
+           TABLE ACCESS FULL DEPT
+
+-- another plan
+SELECT STATEMENT   
+  HASH JOIN  SEMI  
+    TABLE ACCESS  FULL  EMP 
+    TABLE ACCESS  FULL  DEPT
+
+
+!!! Be careful with NULL values and empty set
+  X    NOT IN (NULL, Y)     ->  UNKNOWN
+  NULL NOT IN (NULL, Y)     ->  UNKNOWN
+  NULL NOT IN (empty set)   ->  TRUE
+
+SELECT ename FROM emp WHERE deptno NOT IN
+   (SELECT deptno FROM dept WHERE loc='DALLAS');  -- (NOT IN) 
+------------------------------------------------
+SELECT STATEMENT
+  FILTER
+    TABLE ACCESS FULL EMP
+    TABLE ACCESS FULL DEPT
+
+!!! In the previous query the system doesn't use HASH-JOIN because of the possible NULL values.
+Run the two statements below first.
+alter table dept modify(deptno  not null);
+alter table emp  modify(deptno  not null);
+
+SELECT ename FROM emp WHERE NOT EXISTS
+   (SELECT * FROM dept WHERE loc='DALLAS'  -- (NOT EXISTS)
+    AND emp.deptno=dept.deptno);
+-----------------------------------------
+SELECT STATEMENT      
+  HASH JOIN  ANTI    
+    TABLE ACCESS  FULL  EMP 
+    TABLE ACCESS  FULL  DEPT
+
+
+Execution plans using indexes
+create index ename on emp(ename);
+create unique index empno on emp(empno);
+
+SELECT * FROM emp WHERE ename = 'KING';  -- (index)
+---------------------------------------
+  SELECT STATEMENT
+    TABLE ACCESS BY INDEX ROWID EMP
+      INDEX RANGE SCAN ENAME
+
+SELECT ename FROM emp WHERE ename = 'KING'; -- (only index, no table read)
+-------------------------------------------
+  SELECT STATEMENT
+    INDEX RANGE SCAN ENAME
+
+
+SELECT * FROM emp WHERE empno = 7900;  -- (unique_index)
+-------------------------------------
+  SELECT STATEMENT
+    TABLE ACCESS BY INDEX ROWID EMP
+      INDEX UNIQUE SCAN EMPNO
+
+
+
+SELECT * FROM emp WHERE ename='KING' OR ename='JONES';  -- OR -> inlist iterator
+-----------------------------------------------------
+SELECT STATEMENT 
+  INLIST ITERATOR 
+    TABLE ACCESS  BY INDEX ROWID  EMP
+      INDEX  RANGE SCAN  ENAME
+
+
+SELECT * FROM emp WHERE ename='KING' OR ename IS NULL;  -- NULL -> index cannot be used
+-----------------------------------------------------
+  SELECT STATEMENT
+    TABLE ACCESS FULL EMP
+
+
+More complicated queries
+------------------------
+
+SELECT dept.deptno, dname, avg(sal)
+FROM emp, dept
+WHERE emp.deptno=dept.deptno
+AND NOT EXISTS
+  (SELECT * FROM emp emp2, salgrade
+   WHERE emp2.deptno=dept.deptno
+   AND sal BETWEEN losal AND hisal
+   AND grade=3)
+GROUP BY dept.deptno, dname;
+
+If we don't have any index on the tables
+----------------------------------------
+SELECT STATEMENT
+   SORT GROUP BY
+     FILTER
+       MERGE JOIN
+         SORT JOIN
+           TABLE ACCESS FULL DEPT
+         SORT JOIN
+           TABLE ACCESS FULL EMP
+       NESTED LOOPS
+         TABLE ACCESS FULL SALGRADE
+         TABLE ACCESS FULL EMP
+
+-- another plan
+SELECT STATEMENT      
+  HASH  GROUP BY    
+    HASH JOIN      
+      HASH JOIN  ANTI    
+        TABLE ACCESS  FULL  DEPT  
+        VIEW    VW_SQ_1  
+          NESTED LOOPS      
+            TABLE ACCESS  FULL  SALGRADE 
+            TABLE ACCESS  FULL  EMP  
+      TABLE ACCESS  FULL  EMP  
+
+
+If we have index on emp.deptno and salgrade.grade
+-------------------------------------------------
+SELECT STATEMENT
+  SORT  GROUP BY
+    FILTER
+      NESTED LOOPS
+        TABLE ACCESS  FULL  DEPT
+        TABLE ACCESS  BY INDEX ROWID  EMP
+          INDEX  RANGE SCAN  EMP_DEPTNO_I
+      NESTED LOOPS
+        TABLE ACCESS  BY INDEX ROWID  SALGRADE
+          INDEX  RANGE SCAN  SALGRADE_I
+        TABLE ACCESS  BY INDEX ROWID  EMP
+          INDEX  RANGE SCAN  EMP_DEPTNO_I
+
+
+
+

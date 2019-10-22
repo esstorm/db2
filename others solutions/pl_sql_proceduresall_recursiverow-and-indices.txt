@@ -1,0 +1,76 @@
+
+create or replace PROCEDURE ancestor2 IS
+global_cnt number :=0;
+begin
+    for rec in(select * from nikovits.parentof) loop
+     for rec1 in(select connect_by_root name, LPAD(' ',2*(level-1))||name, SYS_CONNECT_BY_PATH(city,'->') || '->' || city ,connect_by_root city, city as current_city
+                from nikovits.parentof
+                start with name = rec.name
+                connect by prior parent=name) loop
+
+                if rec.city = rec1.current_city then
+                    global_cnt := global_cnt + 1;
+                end if;     
+        end loop;
+        if(global_cnt >= 3) then
+            dbms_output.put_line(rec.name);
+        end if;
+        global_cnt:=0;
+    end loop;
+end;
+-- ahmed's solution!
+create or replace procedure empty_blocks(p_owner varchar2, p_table varchar2) is
+    bnum integer;
+    bfilled integer;
+    bempty integer;
+begin
+    select blocks into bnum from dba_segments
+    where lower(owner) = p_owner and lower(segment_name) = p_table
+    and segment_type = 'TABLE';
+
+    execute immediate 'select count(*) from
+     (select distinct dbms_rowid.rowid_relative_fno(ROWID) file_id,
+      dbms_rowid.rowid_object(ROWID) data_object,
+      dbms_rowid.rowid_block_number(ROWID) block_nr
+      from '||p_owner||'.'||p_table||')' into bfilled;
+
+    bempty := bnum - bfilled;
+
+    dbms_output.put_line(bempty);
+end;
+
+create or replace PROCEDURE find_cycle(p_node VARCHAR2) IS
+cursor cyclic is select dest,
+                SYS_CONNECT_BY_PATH(orig, '->')||'->'||dest as route,LEVEL
+                from flight 
+                start with orig=p_node
+                connect by nocycle prior dest=orig;
+begin
+        for rec in cyclic loop
+            if(p_node = rec.dest) then
+                dbms_output.put_line(rec.route);
+            end if;
+        end loop;
+end;
+
+create or replace PROCEDURE list_indexes(p_owner VARCHAR2, p_table VARCHAR2) IS
+begin
+    for rec in (select * from dba_indexes where owner = UPPER(p_owner) and table_name=UPPER(p_table)) loop
+        dbms_output.put_line(rec.index_name);
+    end loop;
+end;
+-----
+create or replace PROCEDURE num_of_rows IS
+ cnt NUMBER;
+BEGIN 
+ FOR rec IN (select file_id, block_id, blocks from dba_extents 
+             where owner='NIKOVITS' and segment_name='TABLA_123' order by 1,2,3)
+ LOOP
+  FOR i in 1..rec.blocks LOOP
+   SELECT count(*) into cnt FROM nikovits.tabla_123@ullman 
+   WHERE dbms_rowid.rowid_relative_fno(ROWID) = rec.file_id
+   AND dbms_rowid.rowid_block_number(ROWID) = rec.block_id+i-1;
+   dbms_output.put_line(rec.file_id||'.'||to_char(rec.block_id+i-1)||'->'||cnt);
+  END LOOP;
+ END LOOP;
+END;

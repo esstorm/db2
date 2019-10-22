@@ -1,0 +1,117 @@
+Most important columns of data dictionary views
+-----------------------------------------------
+
+DBA_OBJECTS
+-----------
+OWNER             
+OBJECT_NAME       
+SUBOBJECT_NAME    for compound objects like partitioned tables
+OBJECT_ID         
+DATA_OBJECT_ID    if the object has a data object (segment), otherwise -> null
+OBJECT_TYPE       e.g. TABLE, INDEX, VIEW etc.
+CREATED           
+
+DBA_TABLES
+----------
+OWNER            
+TABLE_NAME       
+TABLESPACE_NAME  
+CLUSTER_NAME     if it is a clustered table, otherwise -> null
+IOT_NAME         in case of Index Organised Table
+NUM_ROWS         estimated (!)
+BLOCKS           estimated (!)
+IOT_TYPE         IOT or IOT_OVERFLOW (in case of Index Organised Table)
+
+DBA_TAB_COLUMNS
+---------------
+OWNER            
+TABLE_NAME       
+COLUMN_NAME      
+DATA_TYPE        
+DATA_LENGTH      in case of CHAR(10) -> 10
+DATA_PRECISION   in case of NUMBER(10,2) -> 10
+DATA_SCALE       in case of NUMBER(10,2) -> 2
+COLUMN_ID        first column -> 1, second column -> 2, etc.
+DATA_DEFAULT     if the column has default value
+NUM_DISTINCT     estimated (!)
+
+DBA_SYNONYMS
+------------
+OWNER            
+SYNONYM_NAME     
+TABLE_OWNER      
+TABLE_NAME       table (view) for which the synonym points
+DB_LINK          
+
+DBA_VIEWS 
+---------
+OWNER            
+VIEW_NAME        
+TEXT             text of SELECT statement of the view
+
+DBA_SEQUENCES 
+-------------
+SEQUENCE_OWNER   
+SEQUENCE_NAME    
+MIN_VALUE        
+MAX_VALUE        
+INCREMENT_BY     
+
+DBA_DB_LINKS
+------------
+OWNER            
+DB_LINK          name of the database link
+USERNAME         username in distant database
+HOST             connection info of the distant database
+
+DBA_DATA_FILES
+--------------
+FILE_NAME        name of the file in op. sys.
+FILE_ID          unique identifier of the file
+TABLESPACE_NAME  tablespace to which the file belongs
+BYTES            size in bytes
+BLOCKS           size in blocks
+RELATIVE_FNO     relative file number within tablespace (often equals to file_id)
+AUTOEXTENSIBLE   can op. sys. extend file size automatically?
+MAXBYTES         
+
+DBA_TEMP_FILES   Files of temporary tablespaces. Columns like in DBA_DATA _FILES
+--------------
+
+DBA_TABLESPACES
+---------------
+TABLESPACE_NAME  
+BLOCK_SIZE       datablock size
+STATUS           ONLINE or OFFLINE
+CONTENTS         what we store on it -> PERMANENT, UNDO or TEMPORARY
+
+DBA_SEGMENTS
+------------
+OWNER            
+SEGMENT_NAME     segment name is the same as table name, index name etc.
+PARTITION_NAME   in case of a partitioned table
+SEGMENT_TYPE     e.g. TABLE, INDEX, TABLE_PARTITION etc.
+TABLESPACE_NAME  
+BYTES            size of the segment in bytes
+BLOCKS           size of the segment in blocks
+EXTENTS          number of extents 
+
+DBA_EXTENTS
+-----------
+OWNER            
+SEGMENT_NAME     segment to which the extent belongs
+SEGMENT_TYPE     e.g. TABLE, INDEX, TABLE_PARTITION
+TABLESPACE_NAME  
+EXTENT_ID        
+FILE_ID          file id, to which the extent belongs
+BLOCK_ID         first block of the extent
+BYTES            size in bytes
+BLOCKS           size in blocks
+
+DBA_FREE_SPACE   contigous free spaces within data files
+--------------
+TABLESPACE_NAME  
+FILE_ID          
+BLOCK_ID         first block of contigous free space
+BYTES            size of contigous free space in bytes
+BLOCKS           size in datablocks

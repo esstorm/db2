@@ -1,0 +1,50 @@
+Oracle indices, Index Organized Tables, Partitions, Clusters
+------------------------------------------------------------
+
+Give the tables (table_name) which has a column indexed in descending order.
+(In the solutions only objects of Nikovits are concerned.)
+
+See the name of the column. Why is it so strange? -> DBA_IND_EXPRESSIONS
+
+------------------------------------
+Give the indexes (index name) which are composite and have at least 9 columns (expressions).
+
+-- confirm one of them
+
+------------------------------------------
+Give the bitmap indexes on table NIKOVITS.CUSTOMERS. (Only in ULLMAN database)
+
+
+------------------------------------------
+Give the indexes which has at least 2 columns and are function-based.
+
+
+-----------------------------------------
+Give for one of the above indexes the expression for which the index was created.
+
+ 
+-----------------------------------------
+Give the index organized tables of user NIKOVITS.
+
+Find the table_name, index_name and overflow name (if exists) of the above tables.
+
+Which objects of the previous three has data_object_id in DBA_OBJECTS?
+
+-------------------------------------------
+Give the names and sizes (in bytes) of the partitions of table NIKOVITS.ELADASOK
+
+
+-------------------------------------------
+Which is the biggest partitioned table (in bytes) in the database?
+It can have subpartitions as well.
+
+------------------------------------------
+Give a cluster whose cluster key consists of 3 columns.
+It can have more tables on it!!!
+
+
+------------------------------------------
+How many clusters we have in the database which uses NOT THE DEFAULT hash function?
+(So the creator defined a hash expression.)
+
+

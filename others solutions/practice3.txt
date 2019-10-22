@@ -1,0 +1,41 @@
+SELECT r.rname, c.cname, c.tld, r.countries
+FROM NIKOVITS.countries_v@aramis c, NIKOVITS.rivers_v r
+WHERE r.rname = 'Mekong' AND r.countries LIKE '%'||c.tld||'%';
+
+SELECT * from user_db_links;
+
+SELECT * from v$database; /* which databse you connected to */
+
+drop database link ARAMIS; /* drop the link */
+
+SELECT file_name, bytes FROM dba_data_files;
+
+SELECT tablespace_name FROM dba_tablespaces; /* stores several data files */
+
+SELECT file_name, tablespace_name FROM dba_data_files;
+
+SELECT segment_name, segment_type FROM dba_segments WHERE owner='NIKOVITS';
+
+SELECT * from dba_data_files where file_name like '%/users02%';
+SELECT * from dba_extents where file_id=2;
+
+SELECT count(*) from dba_extents where file_id=2;
+-- We combine the previous queries together:
+SELECT count(*) FROM dba_data_files f, dba_extents e
+WHERE file_name like '%/users02%' AND f.file_id=e.file_id;
+
+SELECT sum(e.bytes) FROM dba_data_files f, dba_extents e
+WHERE file_name LIKE '%/users02%' AND f.file_id=e.file_id;
+
+SELECT count(fr.bytes), sum(fr.bytes), f.bytes
+FROM dba_data_files f, dba_free_space fr
+WHERE file_name LIKE '%/users02%' AND f.file_id=fr.file_id
+GROUP BY f.bytes;
+
+SELECT sum(e.bytes)/f.bytes FROM dba_data_files f, dba_extents e
+WHERE file_name LIKE '%/users02%' AND f.file_id=e.file_id
+GROUP BY f.bytes;
+
+SELECT owner, sum(bytes) from dba_segments
+WHERE segment_type = 'INDEX'
+GROUP BY owner order by 2 desc;

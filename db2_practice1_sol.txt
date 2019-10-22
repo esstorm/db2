@@ -1,0 +1,79 @@
+Give the SELECT statements and the results for the following queries.
+
+Database objects
+----------------
+(DBA_OBJECTS)
+
+Who is the owner of the view DBA_TABLES? Who is the owner of table DUAL?
+
+Who is the owner of synonym DBA_TABLES? (or DUAL)
+
+What kind of objects the database user ORAUSER has? (dba_objects.object_type column)
+ SELECT distinct object_type FROM dba_objects
+ WHERE owner='ORAUSER';
+
+What are the object types existing in the database?
+ SELECT distinct object_type FROM dba_objects;
+
+Which users have more than 10 different kind of objects in the database?
+
+Which users have both triggers and views in the database?
+
+Which users have views but don't have triggers?
+ SELECT distinct owner FROM dba_objects WHERE object_type='VIEW'
+  MINUS
+ SELECT distinct owner FROM dba_objects WHERE object_type='TRIGGER';
+
+Which users have more than 40 tables, but less than 30 indexes?
+ SELECT distinct owner FROM dba_objects WHERE object_type='TABLE'
+ GROUP BY owner
+ HAVING count(*) > 40
+  MINUS
+ SELECT distinct owner FROM dba_objects WHERE object_type='INDEX'
+ GROUP BY owner
+ HAVING count(*) >= 30;
+
+Let's see the difference between a table and a view (dba_objects.data_object_id).
+
+Which object types have NULL (or 0) in the column data_object_id?
+
+Which object types have non NULL (and non 0) in the column data_object_id?
+
+What is the intersection of the previous 2 queries?
+
+
+
+Columns of a table
+------------------
+(DBA_TAB_COLUMNS)
+
+How many columns the nikovits.emp table has?
+
+What is the data type of the 6th column of nikovits.emp's table?
+
+Give the owner and name of the tables which have column name beginning with letter 'Z'.
+
+Give the owner and name of the tables which have at least 8 date columns.
+ SELECT owner, table_name FROM dba_tab_columns
+ WHERE data_type='DATE'
+ GROUP BY owner, table_name
+ HAVING count(*) >= 8;
+
+Give the owner and name of the tables whose 1st and 4th column's datatype is VARCHAR2.
+ SELECT owner, table_name FROM dba_tab_columns
+ WHERE column_id=1 AND data_type='VARCHAR2'
+  INTERSECT
+ SELECT owner, table_name FROM dba_tab_columns
+ WHERE column_id=4 AND data_type='VARCHAR2';
+
+
+Write a PL/SQL procedure, which prints out the owners and names of the tables beginning with the 
+parameter character string. 
+CREATE OR REPLACE PROCEDURE table_print(p_char VARCHAR2) IS
+...
+set serveroutput on
+execute table_print('V'); (you can use execute or call)
+--------------------------------------------------------------------
+-- Help:
+-- Use a cursor to print out the data from the result set of a SELECT statement.
+
