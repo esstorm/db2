@@ -1,3 +1,5 @@
+-- Please focus on the keywords of the statements, not on the table and column names!
+
 -- Data dictionary views about partitioned tables and indexes:
 -- (DBA_PART_TABLES, DBA_PART_INDEXES, DBA_TAB_PARTITIONS, DBA_IND_PARTITIONS, 
 --  DBA_TAB_SUBPARTITIONS, DBA_IND_SUBPARTITIONS, DBA_PART_KEY_COLUMNS, DBA_SUBPART_KEY_COLUMNS

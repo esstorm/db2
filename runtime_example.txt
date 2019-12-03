@@ -1,0 +1,77 @@
+The tables below are created only in ARAMIS database.
+
+Information about telephone centers, districts and telephone calls in Hungary
+-----------------------------------------------------------------------------
+
+In the queries below we will use the following tables. 
+(Actually they are views, based on hungarian table names, but this is not important now.)
+
+PRIMER_V     (district, city, provider, county)                                            ~ 70 rows
+TEL_CENTER_V (district, c_id, c_name)                                                      ~ 1250 rows
+CALLS_V      (calling_id, receiving_id, service, call_date, call_hour, no_calls, seconds)  ~ 45M rows
+
+Explanation
+-----------
+The area of Hungary is divided into disjunct districts - so called primer districts. 
+Each district has a unique number from 0 to 99. When you call a telephone number +36-dd-nnnnnnn 
+'dd' is the district number, 36 is the country code for Hungary. 
+Each district has a central city, a service provider and a county.
+Within each district, there are a lot of telephone centers. Telephone centers have a unique ID 
+and a NAME. Subscriber lines are connected to telephone centers.
+We store the following aggregated information about telephone calls:
+calling_id:   the identifier of the calling telephone center 
+receiving_id: the identifier of the receiving telephone center 
+service:      service type of the calls 
+call_date:    date of the call 
+call_hour:    in which hour the telephone calls started
+no_calls:     the total number of telephone calls in this 1 hour between the calling and receiving centers
+seconds:      the total cumulated seconds of the calls in this hour between the given telephone centers.
+--------------------------------------------------------------------------------------------------------
+The views below are created in schema NIKOVITS, you don't have to create them.
+
+create view TEL_CENTER_V(district, c_id, c_name) as select * from kozpont;
+create view PRIMER_V(district, city, provider, county) as select * from primer;
+create view CALLS_V(calling_id, receiving_id, service, call_date, call_hour, no_calls, seconds)
+ as select * from hivas;
+create view CALLS_V2(calling_id, receiving_id, service, call_date, call_hour, no_calls, seconds)
+ as select * from hivas_v2;
+
+
+QUERY
+-----
+Take the first Monday of 2012. February, and give the summarized number of calls
+on the previous day from the primer district whose city is Szentendre.
+
+
+ALTER SESSION SET nls_date_language = american;  -- 'monday'
+
+-- run-time: 10 sec 
+SELECT sum(no_calls) FROM nikovits.calls_v ca, nikovits.tel_center_v ce, nikovits.primer_v p
+WHERE ca.calling_id = ce.c_id AND ce.district = p. district AND p.city = 'Szentendre' 
+AND ca.call_date + 1 = next_day(to_date('2012.01.31', 'yyyy.mm.dd'), 'monday');
+
+-- run-time: 1 sec 
+SELECT sum(no_calls) FROM nikovits.calls_v ca, nikovits.tel_center_v ce, nikovits.primer_v p
+WHERE ca.calling_id = ce.c_id AND ce.district = p. district AND p.city = 'Szentendre' 
+AND ca.call_date = next_day(to_date('2012.01.31', 'yyyy.mm.dd'), 'monday') - 1;
+
+
+There are two similar queries above. What can cause the difference in run-time?
+*******************************************************************************
+
+
+The original tables have Hungarian names: KOZPONT, PRIMER, HIVAS
+
+ALTER SESSION SET nls_date_language = hungarian;  -- 'monday'
+-- 10 sec 
+SELECT sum(darab) FROM nikovits.hivas, nikovits.kozpont, nikovits.primer
+WHERE hivas.kozp_azon_hivo=kozpont.kozp_azon AND kozpont.primer=primer.korzet
+AND primer.varos = 'Szentendre' 
+AND datum + 1 = next_day(to_date('2012.01.31', 'yyyy.mm.dd'), 'hétfõ');
+
+
+-- 1 sec 
+SELECT sum(darab) FROM nikovits.hivas, nikovits.kozpont, nikovits.primer
+WHERE hivas.kozp_azon_hivo=kozpont.kozp_azon AND kozpont.primer=primer.korzet
+AND primer.varos = 'Szentendre' 
+AND datum = next_day(to_date('2012.01.31', 'yyyy.mm.dd'), 'hétfõ') - 1;

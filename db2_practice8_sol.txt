@@ -1,0 +1,158 @@
+Execution plans, hints
+----------------------
+
+The owner of the following tables is NIKOVITS.
+
+PRODUCT(prod_id, name, color, weight)
+SUPPLIER(supl_id, name, status, address)
+PROJECT(proj_id, name, address)
+SUPPLY(supl_id, prod_id, proj_id, amount, sDate)
+
+The tables have indexes too.
+CREATE INDEX prod_color_idx ON product(color);
+CREATE UNIQUE INDEX prod_id_idx ON product(prod_id);
+CREATE UNIQUE INDEX proj_id_idx ON PROJECT(proj_id);
+CREATE UNIQUE INDEX supplier_id_idx ON supplier(supl_id);
+CREATE INDEX supply_supplier_idx ON supply(supl_id);
+CREATE INDEX supply_proj_idx ON supply(proj_id);
+CREATE INDEX supply_prod_idx ON supply(prod_id);
+
+------------------------------------------------------------
+Exercise 1.
+Query:
+Give the sum amount of products where prod_id=2 and supl_id=2.
+
+Give hints in order to use the following execution plans:
+a) No index 
+b) Two indexes and the intersection of ROWID-s (AND-EQUAL in plan).
+
+select /*+ no_index(s) */ 
+sum(amount) from nikovits.supply s where prod_id = 2 and supl_id = 2;
+
+select /*+ and_equal(s supply_prod_idx supply_supplier_idx) */ 
+sum(amount) from nikovits.supply s where prod_id = 2 and supl_id = 2;
+
+------------------------------------------------------------
+Exercise 2.
+Query:
+Give the sum amount of products where the color of product is 'piros' and address of supplier is 'Pecs'.
+
+Give hints in order to use the following execution plans:
+a) Join order should be: first supply and product tables then supplier table.
+b) Join order should be: first supply and supplier tables then product table.
+
+a)
+select /*+ ordered */ sum(amount) 
+from nikovits.supply sy, nikovits.product p, nikovits.supplier sr
+where sy.supl_id=sr.supl_id and p.prod_id=sy.prod_id
+and p.color='piros' and sr.address='Pecs';
+b)
+select /*+ ordered */ sum(amount) 
+from nikovits.supply sy, nikovits.supplier sr, nikovits.product p
+where sy.supl_id=sr.supl_id and p.prod_id=sy.prod_id
+and p.color='piros' and sr.address='Pecs';
+
+------------------------------------------------------------
+Exercise 3.
+Give a SELECT statement which has the following execution plan.
+
+
+PLAN (OPERATION + OPTIONS + OBJECT_NAME)                                               
+---------------------------------------- 
+SELECT STATEMENT +  + 
+  SORT + AGGREGATE + 
+    TABLE ACCESS + FULL + PRODUCT
+
+select /*+ full(p) */ sum(weight)
+from nikovits.product p where color='piros';
+
+
+SELECT STATEMENT +  + 
+  SORT + AGGREGATE + 
+    TABLE ACCESS + BY INDEX ROWID + PRODUCT
+      INDEX + UNIQUE SCAN + PROD_ID_IDX
+
+select /*+ index(p) */ sum(weight)
+from nikovits.product p where prod_id=1;
+
+
+SELECT STATEMENT +  + 
+  SORT + AGGREGATE + 
+    HASH JOIN +  + 
+      TABLE ACCESS + FULL + PROJECT
+      TABLE ACCESS + FULL + SUPPLY
+
+select /*+ full(p) */ sum(amount)
+from nikovits.supply s natural join nikovits.project p 
+where address='Szeged';
+
+
+SELECT STATEMENT +  + 
+  HASH + GROUP BY + 
+    HASH JOIN +  + 
+      TABLE ACCESS + FULL + PROJECT
+      TABLE ACCESS + FULL + SUPPLY
+
+select /*+ full(p) */ sum(amount)
+from nikovits.supply s natural join nikovits.project p 
+where address='Szeged' group by prod_id;
+
+
+SELECT STATEMENT +  + 
+  SORT + AGGREGATE + 
+    MERGE JOIN +  + 
+      SORT + JOIN + 
+        TABLE ACCESS + BY INDEX ROWID BATCHED + PRODUCT
+          INDEX + RANGE SCAN + PROD_COLOR_IDX
+      SORT + JOIN + 
+        TABLE ACCESS + FULL + SUPPLY
+
+select /*+ use_merge(s p) index(p) */ sum(amount)
+from nikovits.supply s natural join nikovits.product p 
+where color='piros';
+
+
+SELECT STATEMENT +  + 
+  FILTER +  + 
+    HASH + GROUP BY + 
+      HASH JOIN +  + 
+        TABLE ACCESS + FULL + PROJECT
+        HASH JOIN +  + 
+          TABLE ACCESS + FULL + SUPPLIER
+          TABLE ACCESS + FULL + SUPPLY
+
+select /*+ no_index(s) leading(sr) */ sum(amount)
+from nikovits.supply s, nikovits.supplier sr, nikovits.project p 
+where s.supl_id=sr.supl_id and s.proj_id=p.proj_id 
+and sr.address='Pecs' and p.address='Szeged'
+group by prod_id having prod_id > 100;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

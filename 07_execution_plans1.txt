@@ -1,6 +1,5 @@
-
 SELECT * FROM emp; 
-SELECT ename FROM emp; (projekció)
+SELECT ename FROM emp; (projection)
 SELECT ename FROM emp WHERE ename='JONES';  -- (where)
 ------------------------------------------
 SELECT STATEMENT
@@ -12,7 +11,7 @@ SELECT STATEMENT
   HASH UNIQUE
     TABLE ACCESS FULL EMP
 
--- another plan (if we put ORDER BY by deptno)
+-- another plan (if we put ORDER BY by deptno into the SELECT statement)
 SELECT STATEMENT 
   SORT  UNIQUE   
     TABLE ACCESS  FULL  EMP
@@ -29,7 +28,7 @@ SELECT STATEMENT
   HASH  GROUP BY
     TABLE ACCESS  FULL  EMP
 
--- another plan
+-- another plan (if we put ORDER BY by deptno into the SELECT statement)
 SELECT STATEMENT
   SORT GROUP BY
     TABLE ACCESS FULL EMP
@@ -42,12 +41,11 @@ SELECT STATEMENT
     HASH GROUP BY
       TABLE ACCESS FULL EMP
 
--- another plan
+-- another plan (if we put ORDER BY by deptno at the end)
 SELECT STATEMENT
   FILTER      
     SORT  GROUP BY    
       TABLE ACCESS  FULL  EMP
-
 
 SELECT ename, dname FROM emp, dept 
 WHERE emp.deptno=dept.deptno;        -- (join)
@@ -129,11 +127,6 @@ SELECT STATEMENT
   FILTER
     TABLE ACCESS FULL EMP
     TABLE ACCESS FULL DEPT
-
-!!! In the previous query the system doesn't use HASH-JOIN because of the possible NULL values.
-Run the two statements below first.
-alter table dept modify(deptno  not null);
-alter table emp  modify(deptno  not null);
 
 SELECT ename FROM emp WHERE NOT EXISTS
    (SELECT * FROM dept WHERE loc='DALLAS'  -- (NOT EXISTS)

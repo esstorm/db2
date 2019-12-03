@@ -3,21 +3,21 @@
 We have a table R, I1 dense index and I2 sparse index with the following parameters:
 T(R) = 10000, bf(R) = 20, bf(I1) = 100, bf(I2) = 100
 Give the following:
-B(R)  = ?  -> T(R)/bf(R)
-B(I1) = ?  -> T(I1)/bf(I1)  (I1 dense !)
-B(I2) = ?  -> T(I2)/bf(I2)  (I2 sparse !)
+B(R)  = ?  -> B(R) = T(R)/bf(R)
+B(I1) = ?  -> B(I1) = T(I1)/bf(I1)  [ I1 dense, so T(I1) = T(R) ]
+B(I2) = ?  -> B(I2) = T(I2)/bf(I2)  [ I2 sparse, so T(I2) = B(R) ]
 
 
 2. exercise 
 -----------
 Give the values in the previous exercise, if the data blocks can be filled 80% full.
-
+-> bf(r) = 0.8 * 20; bf(I1) = 0.8 * 100, as for the rest computation is the same as in the previous exercise
 
 3. exercise 
 -----------
-T(R) = 1000000, bf(R) = 20, we build a B+ tree index on a key column for which bf(I) = 50. 
+T(R) = 1000000, bf(R) = 20, we build a B+ tree index on a key column (A) for which bf(I) = 50. 
 Give the following:
-B(I) = ?    (help: examine the index level by level)
+B(I) = ?    (help: compute the index blocks level by level starting with the leaf)
 
 What is the cost (in block reads) of an A = c type search (worst case) if
 a) the table is stored unordered and we don't use index;  -> B(R)
@@ -25,23 +25,24 @@ b) the table is stored ordered and we don't use index;    -> log2(B(R))
 c) we use the above B+ tree index.                        -> ht(I) + 1
 
 
-4. exercise (05_optimization.ppt, page 11.)
+4. exercise (05_optimization.pptx, page 11.)
 -----------
 Let's consider relation R with the following parameters:
 T(R)=1000000, block size = 4096 bytes, L(R)=128 bytes, V(R,A)=500, and let W the result
 of the following query:
 W <-- SELECT c1,c2,c3 FROM R WHERE A=x;
 Compute B(R) and B(W) if L(W)=64 bytes.
+-> compute bf(W) and T(W), then B(W) = T(W)/bf(W)
 
 
-5. exercise  (05_optimization.ppt, page 21.)
+5. exercise  (05_optimization.pptx, page 21.)
 -----------  
 Let's suppose we have a memory size 101 blocks (M=101), and have a table R, where B(R)=1000000.
 What is the cost (in block I/O) of a sort operation?
 -> 2*B(R) + 2*B(R)*log[B(R)/M] - B(R)  (base of logarithm is M-1)
 
 
-6. exercise  (05_optimization.ppt, a) -> p. 28-29., b) -> p. 32., c) -> p. 21. and 31.)
+6. exercise  (05_optimization.pptx, a) -> p. 28-29., b) -> p. 32., c) -> p. 21. and 31.)
 -----------  
 Let's suppose we have a memory 101 blocks (M=101), and have a 1000000 rows table R
 T(R) = 1000000, whose bf(R) = 10, and a 60000 rows table, T(S) = 60000, whose bf(S) = 12. 
@@ -52,7 +53,7 @@ c) sort-merge join algorithm        -> (Number of passes)*[2*B(S)+2*B(R)] + B(S)
    where "Number of passes" can be estimated with log[B(R)/M] (base of logarithm is M-1)
 
 
-7. exercise  (05_optimization.ppt, p. 30., 05_operation_cost_examples.ppt, p. 19-21.)
+7. exercise  (05_optimization.pptx, p. 30., 05_operation_cost_examples.pptx, p. 19-21.)
 -----------  
 What is the I/O cost of an index-join of the two tables in the previous exercise, 
 if we have an index on R (we keep the index in the memory), R is not clustered and

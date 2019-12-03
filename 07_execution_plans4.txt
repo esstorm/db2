@@ -1,0 +1,221 @@
+Queries based on Oracle demo tables. Some tables are not existing in our actual database.
+
+
+Reading a table based on ROWID
+------------------------------
+SELECT e.employee_id, e.first_name, e.last_name
+FROM nikovits.employees e WHERE rowid='AAATuXAACAAAALDAAA';
+
+PLAN                                               (access--filter)
+-------------------------------------------------- -------------------------------------------------
+SELECT STATEMENT +  +                               --
+  TABLE ACCESS + BY USER ROWID + EMPLOYEES          --
+
+
+Index reading in desc order
+-------------------------------
+SELECT * FROM hr.employees e WHERE department_id < 50 ORDER BY department_id DESC;
+
+PLAN                                                   (access--filter)
+-----------------------------------------------------  -----------------------------------------
+SELECT STATEMENT +  +                                  --
+  TABLE ACCESS + BY INDEX ROWID + EMPLOYEES            --
+    INDEX + RANGE SCAN DESCENDING + EMP_DEPARTMENT_IX  "DEPARTMENT_ID"<50 -- "DEPARTMENT_ID"<50
+
+
+Index skip scan (index columns: last_name, first_name)
+---------------
+SELECT /*+ INDEX_SS(e emp_name_ix) */ last_name FROM hr.employees e
+WHERE first_name = 'Steven';
+
+PLAN                                               (access--filter)
+-------------------------------------------------- ----------------------------------------------
+SELECT STATEMENT +  +                               --
+  INDEX + SKIP SCAN + EMP_NAME_IX                  "FIRST_NAME"='Steven' -- "FIRST_NAME"='Steven'
+
+
+Search within one index -> INLIST, union of several results -> CONCATENATION
+----------------------------------------------------------------------------
+SELECT /*+ USE_CONCAT */ *  FROM hr.employees e
+WHERE manager_id = 108 OR department_id = 110 OR department_id=90;
+
+PLAN                                              
+--------------------------------------------------
+SELECT STATEMENT +  +                             
+  CONCATENATION +  +                              
+    INLIST ITERATOR +  +                          
+      TABLE ACCESS + BY INDEX ROWID + EMPLOYEES   
+        INDEX + RANGE SCAN + EMP_DEPARTMENT_IX    
+    TABLE ACCESS + BY INDEX ROWID + EMPLOYEES     
+      INDEX + RANGE SCAN + EMP_MANAGER_IX         
+
+
+JOIN syntax is not important (JOIN or WHERE)
+--------------------------------------------
+SELECT c.cust_last_name, co.country_name
+FROM   sh.customers c NATURAL JOIN sh.countries co;
+
+PLAN                                               (access--filter)
+-------------------------------------------------- -------------------------------------
+SELECT STATEMENT +  +                               --
+  HASH JOIN +  +                                   "C"."COUNTRY_ID"="CO"."COUNTRY_ID" --
+    TABLE ACCESS + FULL + COUNTRIES                 --
+    TABLE ACCESS + FULL + CUSTOMERS                 --
+
+
+Not equijoin
+------------
+SELECT s.amount_sold, p.promo_name
+FROM sh.sales s JOIN sh.promotions p ON (s.time_id BETWEEN p.promo_begin_date AND p.promo_end_date) ;
+
+PLAN                                        (access--filter)
+-----------------------------------------   -------------------------------------------------
+SELECT STATEMENT +  +                       --
+  MERGE JOIN +  +                           --
+    SORT + JOIN +                           --
+      TABLE ACCESS + FULL + PROMOTIONS      --
+    FILTER +  +                             -- "S"."TIME_ID"<="P"."PROMO_END_DATE"
+      SORT + JOIN +                         "S"."TIME_ID">="P"."PROMO_BEGIN_DATE" -- "S"."TIME_ID">="P"."PROMO_BEGIN_DATE
+        PARTITION RANGE + ALL +             --
+          TABLE ACCESS + FULL + SALES       --
+
+Outer join  
+----------
+SELECT s.time_id, t.time_id
+FROM   sh.sales s RIGHT OUTER JOIN  sh.times t ON (s.time_id = t.time_id);
+
+PLAN                                               (access--filter)
+-------------------------------------------------- ---------------------------------
+SELECT STATEMENT +  +                               --
+  HASH JOIN + OUTER +                              "S"."TIME_ID"(+)="T"."TIME_ID" --
+    TABLE ACCESS + FULL + TIMES                     --
+    PARTITION RANGE + ALL +                         --
+      TABLE ACCESS + FULL + SALES                   --
+
+If we have index ... it can use them
+
+PLAN                                                     (access--filter)
+--------------------------------------------------       ----------------------------------
+SELECT STATEMENT +  +                                    --
+  HASH JOIN + OUTER +                                    "S"."TIME_ID"(+)="T"."TIME_ID" --
+    INDEX + FAST FULL SCAN + TIME_PK                     --
+    PARTITION RANGE + ALL +                              --
+      BITMAP CONVERSION + TO ROWIDS +                    --
+        BITMAP INDEX + FAST FULL SCAN + SALES_TIME_BIX   --
+
+
+Right outer join
+-----------------------
+SELECT s.time_id, t.time_id
+FROM   sh.sales s LEFT OUTER JOIN  sh.times t ON (s.time_id = t.time_id);
+
+PLAN                                               (access--filter)
+-------------------------------------------------- ----------------------------------
+SELECT STATEMENT +  +                               --
+  HASH JOIN + RIGHT OUTER +                        "S"."TIME_ID"="T"."TIME_ID"(+) --
+    TABLE ACCESS + FULL + TIMES                     --
+    PARTITION RANGE + ALL +                         --
+      TABLE ACCESS + FULL + SALES                   --
+
+
+Full outer join                 (lower branch searches Countries records without matching pair)
+-----------------------------   
+SELECT c.cust_id, c.cust_last_name, co.country_name
+FROM   sh.customers c FULL OUTER JOIN sh.countries co ON (c.country_id = co.country_id);
+
+PLAN                                               (access--filter)
+-------------------------------------------------- ----------------------------------------
+SELECT STATEMENT +  +                               --
+  VIEW +  +                                         --
+    UNION-ALL +  +                                  --
+      HASH JOIN + RIGHT OUTER +                    "C"."COUNTRY_ID"="CO"."COUNTRY_ID"(+) --
+        TABLE ACCESS + FULL + COUNTRIES             --
+        TABLE ACCESS + FULL + CUSTOMERS             --
+      HASH JOIN + ANTI +                           "C"."COUNTRY_ID"="CO"."COUNTRY_ID" --
+        TABLE ACCESS + FULL + COUNTRIES             --
+        TABLE ACCESS + FULL + CUSTOMERS             --
+
+
+Not correlated subquery   
+----------------------
+SELECT c.* FROM sh.customers c WHERE c.country_id IN 
+  (SELECT co.country_id FROM sh.countries co WHERE co.country_subregion = 'Asia');
+
+PLAN                                               (access--filter)
+-------------------------------------------------- -------------------------------------
+SELECT STATEMENT +  +                               --
+  HASH JOIN +  +                                   "C"."COUNTRY_ID"="CO"."COUNTRY_ID" --
+    TABLE ACCESS + FULL + COUNTRIES                 -- "CO"."COUNTRY_SUBREGION"='Asia'
+    TABLE ACCESS + FULL + CUSTOMERS                 --
+
+
+Correlated subquery
+-------------------
+SELECT p1.* FROM sh.promotions p1 WHERE  p1.promo_cost =
+  (SELECT MAX(p2.promo_cost) FROM sh.promotions p2 WHERE p1.promo_category = p2.promo_category);
+
+PLAN                                               (access--filter)
+-------------------------------------------------- -------------------------------------------------
+SELECT STATEMENT +  +                               --
+  HASH JOIN +  +                                   "P1"."PROMO_COST"="VW_COL_1" AND "P1"."PROMO_CATEGORY"="PROMO_CATEGORY"
+    VIEW +  + VW_SQ_1                               --
+      HASH + GROUP BY +                             --
+        TABLE ACCESS + FULL + PROMOTIONS            --
+    TABLE ACCESS + FULL + PROMOTIONS                --
+
+Antijoin (NOT IN) (subquery will be leading table)
+-----------------
+SELECT c.* FROM sh.customers c 
+WHERE  c.cust_income_level = 'F: 110,000 - 129,999' AND c.country_id NOT IN 
+  (SELECT co.country_id FROM sh.countries co WHERE co.country_subregion = 'Europe');
+
+PLAN                                               (access--filter)
+-------------------------------------------------- -------------------------------------------------
+SELECT STATEMENT +  +                               --
+  HASH JOIN + RIGHT ANTI +                         "C"."COUNTRY_ID"="CO"."COUNTRY_ID" --
+    TABLE ACCESS + FULL + COUNTRIES                 -- "CO"."COUNTRY_SUBREGION"='Europe'
+    TABLE ACCESS + FULL + CUSTOMERS                 -- "C"."CUST_INCOME_LEVEL"='F: 110,000 - 129,999'
+
+
+Semijoin (EXISTS) (NOT EXISTS -> Antijoin)
+-----------------
+SELECT e.employee_id, e.first_name, e.last_name, e.salary 
+FROM hr.employees e WHERE e.department_id = 80 AND e.job_id='SA_REP' AND EXISTS 
+  (SELECT 1 FROM oe.orders o WHERE e.employee_id = o.sales_rep_id); 
+
+PLAN                                               (access--filter)
+-------------------------------------------------- -------------------------------------------------
+SELECT STATEMENT +  +                               --
+  NESTED LOOPS + SEMI +                             --
+    TABLE ACCESS + FULL + EMPLOYEES                 -- "E"."JOB_ID"='SA_REP' AND "E"."DEPARTMENT_ID"=80
+    INDEX + RANGE SCAN + ORD_SALES_REP_IX          "E"."EMPLOYEE_ID"="O"."SALES_REP_ID" -- "O"."SALES_REP_
+
+
+EXISTS not correlated (no join in plan)
+--------------------
+SELECT e.employee_id, e.first_name, e.last_name, e.salary 
+FROM hr.employees e WHERE e.department_id = 80 AND e.job_id='SA_REP' AND EXISTS 
+  (SELECT 1 FROM oe.orders); 
+
+PLAN                                               (access--filter)
+-------------------------------------------------- -------------------------------------------------
+SELECT STATEMENT +  +                               --
+  FILTER +  +                                       --  EXISTS (SELECT /*+ */ 0 FROM "OE"."ORDERS" "ORDERS")
+    TABLE ACCESS + FULL + EMPLOYEES                 -- "E"."JOB_ID"='SA_REP' AND "E"."DEPARTMENT_ID"=80
+    INDEX + FULL SCAN + ORDER_PK                    --
+
+
+Top N analysis 
+---------------
+SELECT * FROM  
+  (SELECT prod_id, prod_name, prod_list_price, prod_min_price  FROM sh.products ORDER BY prod_list_price DESC)
+WHERE ROWNUM <= 5;
+
+PLAN                                               (access--filter)
+-------------------------------------------------- ---------------------------
+SELECT STATEMENT +  +                               --
+  COUNT + STOPKEY +                                 -- ROWNUM<=5
+    VIEW +  +                                       --
+      SORT + ORDER BY STOPKEY +                     -- ROWNUM<=5
+        TABLE ACCESS + FULL + PRODUCTS              --
+

@@ -99,19 +99,19 @@ Decompress the following run-length encoded bit vector:
 
 Oracle indexes
 --------------
-
+1.
 Give the tables (table_name) which has a column indexed in descending order.
 See the name of the column. Why is it so strange? -> DBA_IND_EXPRESSIONS
-
+2.
 Give the indexes (index name) which are composite and have at least 9 columns (expressions).
-
-Give the name of bitmap indexes on table NIKOVITS.CUSTOMERS. (ULLMAN database only)
-
+3.
+Give the name of bitmap indexes on table NIKOVITS.CUSTOMERS.
+4.
 Give the indexes which has at least 2 columns and are function-based.
-
+5.
 Give for one of the above indexes the expression for which the index was created.
-
 ---------------------------------------------------------------------------------------
+6.
 Write a PL/SQL procedure which prints out the names and sizes (in bytes) of indexes created
 on the parameter table.
 CREATE OR REPLACE PROCEDURE list_indexes(p_owner VARCHAR2, p_table VARCHAR2) IS
@@ -120,5 +120,15 @@ Test:
 -----
 set serveroutput on
 execute list_indexes('nikovits', 'emp');
-
+---------------------------------------------------------------------------------------
+7.
+Write a PL/SQL procedure which gets a file_id and block_id as a parameter and prints out the database
+object to which this datablock is allocated. (owner, object_name, object_type).
+If the specified datablock is not allocated to any objects, the procedure should print out 'Free block'.
+CREATE OR REPLACE PROCEDURE block_usage(p_fileid NUMBER, p_blockid NUMBER) IS
+...
+Test:
+-----
+set serveroutput on
+execute block_usage(2, 615);
 

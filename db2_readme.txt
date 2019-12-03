@@ -13,7 +13,7 @@ At the exam ~15 questions will be selected from this list.
 
 Practice
 --------
-There will be two tests, a midterm test and another one in the last practice.
+There will be two tests, a midterm test and an endterm test.
 In the tests you have to write exercises in paper and write SQL and PL/SQL programs by computer.
 
 Some information about the databases:
@@ -29,8 +29,9 @@ port: 1521
 service_name: ullman
 
 You can change your password with the following SQL statement:
-
 ALTER USER my_username IDENTIFIED BY new_password;
+
+How to connect to the databases from outside ELTE domain -> ssh_tunnel.pdf
 =====================================
 
 
@@ -39,7 +40,7 @@ Topics for the exam (A brief overview of the semester)
 Textbook: Hector Garcia-Molina, Jeffrey D. Ullman, Jennifer Widom: Database Systems, The Complete Book.
 
 Oracle architecture
-  01_Oracle_architecture.ppt, 01_Oracle_storage.ppt)
+  01_Oracle_architecture.pptx, 01_Oracle_storage.pptx, Oracle_concepts.docx)
 13.2 Disks
   02_RAID.doc
 13.5 Arranging Data on Disk

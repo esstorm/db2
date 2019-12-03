@@ -1,45 +1,31 @@
-Oracle indices, Index Organized Tables, Partitions, Clusters
-------------------------------------------------------------
+Size estimation
+---------------
 
-Give the tables (table_name) which has a column indexed in descending order.
-(In the solutions only objects of Nikovits are concerned.)
+1. exercise  (06_UW_query_processing.pptx 46., 57. pages)
+-----------
+T(R) = 1000000, V(R,A) = 500, V(R,B) = 1000
+Give T(W) if W is the result of the following query:
+a) W <-- SELECT * FROM R WHERE A=x;           -> T(R)/V(R,A)
+b) W <-- SELECT * FROM R WHERE A=x AND B=y;   -> T(R)*(1/V(R,A))*(1/V(R,B))
+c) W <-- SELECT * FROM R WHERE A=x OR B=y;    -> T(R)*(1-[1-1/V(R,A)]*[1-1/V(R,B)])
 
-SELECT * FROM dba_ind_columns WHERE descend='DESC' AND index_owner='NIKOVITS';
+We did some transformation:  let's denote V(R,A) with v1, V(R,B) with v2, then
+T*[1-(1-1/v1)*(1-1/v2)] = T*[(v1*v2)/(v1*v2) - (v1-1)*(v2-1)/(v1*v2)] =
+= T*[(v1 + v2 -1)/(v1*v2)] = T/v2 + T/v1 - T/(v1*v2)
 
-See the name of the column. Why is it so strange? -> DBA_IND_EXPRESSIONS
+2. exercise  (06_UW_query_processing.pptx 52-56. pages)
+-----------
+T(R) = 10000, T(S) = 4000, common column: A, in which the same values occur.
+V(R,A) = 500, V(S,A) = 500.
+Give T(W) if W is the result of the following query:
+a) W <-- SELECT * FROM R CROSS JOIN S;     -> T(R)*T(S)
+b) W <-- SELECT * FROM R NATURAL JOIN S;   -> T(R)*T(S)/V(R,A)
 
-SELECT * FROM dba_ind_columns WHERE index_name='EMP2' AND index_owner='NIKOVITS';
-SELECT * FROM dba_ind_expressions WHERE index_name='EMP2' AND index_owner='NIKOVITS';
 
-------------------------------------
-Give the indexes (index name) which are composite and have at least 9 columns (expressions).
 
-SELECT index_owner, index_name FROM dba_ind_columns 
-GROUP BY index_owner, index_name HAVING count(*) >=9;
-
--- confirm one of them
-SELECT * FROM dba_ind_columns WHERE index_owner='SYS' AND index_name='I_OBJ2';
-
-------------------------------------------
-Give the bitmap indexes on table NIKOVITS.CUSTOMERS. (Only in ULLMAN database)
-
-SELECT * FROM dba_indexes 
-WHERE table_owner='NIKOVITS' AND table_name='CUSTOMERS' AND index_type='BITMAP';
-
-------------------------------------------
-Give the indexes which has at least 2 columns and are function-based.
-
-SELECT index_owner, index_name FROM dba_ind_columns 
-GROUP BY index_owner, index_name HAVING count(*) >=2
- INTERSECT
-SELECT index_owner, index_name FROM dba_ind_expressions;
-
------------------------------------------
-Give for one of the above indexes the expression for which the index was created.
-
- 
-
------------------------------------------
+Index Organized Tables, Partitions, Clusters
+--------------------------------------------
+3.
 Give the index organized tables of user NIKOVITS.
 
 SELECT owner, table_name, iot_name, iot_type FROM dba_tables WHERE owner='NIKOVITS' AND iot_type = 'IOT';
@@ -51,38 +37,53 @@ WHERE table_owner='NIKOVITS' AND index_type LIKE '%IOT%TOP%';
 SELECT owner, table_name, iot_name, iot_type FROM dba_tables 
 WHERE owner='NIKOVITS' AND iot_type = 'IOT_OVERFLOW';
 
-Which objects of the previous three has data_object_id in DBA_OBJECTS?
-
+Which objects of the previous three has not null data_object_id in DBA_OBJECTS?
 -------------------------------------------
+4.
 Give the names and sizes (in bytes) of the partitions of table NIKOVITS.ELADASOK
 
 SELECT * FROM dba_part_tables WHERE owner='NIKOVITS' AND table_name='ELADASOK';
 SELECT * FROM dba_tab_partitions WHERE table_owner='NIKOVITS' AND table_name='ELADASOK';
 SELECT segment_name, partition_name, segment_type, bytes FROM dba_segments 
 WHERE owner='NIKOVITS' AND segment_name LIKE 'ELADASOK' AND segment_type LIKE 'TABLE%';
-
 -------------------------------------------
+5.
 Which is the biggest partitioned table (in bytes) in the database?
 It can have subpartitions as well.
 
-SELECT * FROM 
-  (SELECT owner, segment_name, sum(bytes) 
-   FROM dba_segments WHERE segment_type LIKE 'TABLE%PARTITION'
-   GROUP BY owner, segment_name ORDER BY sum(bytes) DESC)
-WHERE ROWNUM = 1;
-
+SELECT owner, segment_name, sum(bytes) 
+FROM dba_segments WHERE segment_type LIKE 'TABLE%PARTITION'
+GROUP BY owner, segment_name ORDER BY sum(bytes) DESC
+FETCH FIRST 1 ROWS ONLY;
 ------------------------------------------
+6.
 Give a cluster whose cluster key consists of 3 columns.
-It can have more tables on it!!!
+A cluster can have more than two tables on it!!!
 
 SELECT owner, cluster_name FROM dba_clu_columns GROUP BY owner, cluster_name 
 HAVING count(DISTINCT clu_column_name) = 3;
 -- confirm one of them
 SELECT * FROM dba_clu_columns WHERE owner='SYS' AND cluster_name like 'C_FILE%';
-
 ------------------------------------------
-How many clusters we have in the database which uses NOT THE DEFAULT hash function?
+7.
+How many clusters do we have in the database which uses NOT THE DEFAULT hash function?
 (So the creator defined a hash expression.)
 
 SELECT * FROM dba_cluster_hash_expressions;
+------------------------------------------
+8.
+Write a PL/SQL procedure which prints out the storage type (heap organized, partitioned, index organized or clustered) 
+for the parameter table.
+CREATE OR REPLACE PROCEDURE print_type(p_owner VARCHAR2, p_table VARCHAR2) IS
+...
+Test:
+-----
+set serveroutput on
+execute print_type('nikovits', 'eladasok5');
+execute print_type('nikovits', 'cikk_iot');
+execute print_type('nikovits', 'emp_clt');
 
+Help:
+SELECT owner, table_name, cluster_name, partitioned, iot_type 
+FROM dba_tables WHERE owner='NIKOVITS' 
+AND table_name IN ('ELADASOK5', 'CIKK_IOT', 'EMP_CLT');

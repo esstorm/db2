@@ -1,0 +1,46 @@
+Execution plans, hints
+----------------------
+
+Exercise 4.
+-----------
+
+The owner of the following tables is NIKOVITS.
+
+PRODUCT(prod_id, name, color, weight)
+SUPPLIER(supl_id, name, status, address)
+PROJECT(proj_id, name, address)
+SUPPLY(supl_id, prod_id, proj_id, amount, date)
+
+The tables have indexes too.
+
+-- QUERY
+Give the sum amount of products where color = 'piros' ('piros' in Hungarian means 'red'). 
+
+Give hints in order to use the following execution plans:
+
+a) no index at all
+SELECT /*+ full(p) full(s) */ SUM(amount) 
+FROM nikovits.product p, nikovits.supply s
+WHERE p.prod_id=s.prod_id and color='piros';
+
+b) one index
+SELECT /*+ index(p) full(s) */ SUM(amount) 
+FROM nikovits.product p, nikovits.supply s
+WHERE p.prod_id=s.prod_id and color='piros';
+
+c) index for both tables
+SELECT /*+ index(p) index(s) */ SUM(amount) FROM nikovits.product p, nikovits.supply s
+WHERE p.prod_id=s.prod_id and color='piros';
+
+d) SORT-MERGE join
+SELECT /*+ use_merge(p s) */ SUM(amount) FROM nikovits.product p, nikovits.supply s
+WHERE p.prod_id=s.prod_id and color='piros';
+
+e) NESTED-LOOPS join
+SELECT /*+ use_nl(p s) */ SUM(amount) FROM nikovits.product p, nikovits.supply s
+WHERE p.prod_id=s.prod_id and color='piros';
+
+f) NESTED-LOOPS join and no index
+SELECT /*+ use_nl(p s) no_index(s) */ SUM(amount) FROM nikovits.product p, nikovits.supply s
+WHERE p.prod_id=s.prod_id and color='piros';
+

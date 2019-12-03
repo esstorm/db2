@@ -1,0 +1,78 @@
+Execution plans, hints
+----------------------
+
+Exercise 1.
+-----------
+Create PLAN_TABLE, generate execution plans into this table for different SELECT statements
+and present the tree structure of the execution plans (see expl.txt).
+-----------------------------------------------------------------------------------------
+
+Exercise 2.
+-----------
+Create your own copy from the following tables and answer the following query.
+QUERY
+-----
+Give the name of the departments which have an employee with salary category 1.
+
+NIKOVITS.EMP (empno, ename, job, mgr, hiredate, sal, comm, deptno)
+NIKOVITS.DEPT(deptno, dname, loc)
+NIKOVITS.SAL_CAT(category, lowest_sal, highest_sal)
+
+See the execution plan of the previous query, then create an index for any of the tables
+that can be used by the query.
+Check the new execution plan, if the index is really used in it! 
+-----------------------------------------------------------------------------------------
+
+Exercise 3.
+-----------
+Compare the two similar queries in runtime_example.txt, compare the execution plans
+and tell what the difference is. Why one of them is much faster? See COST and CARDINALITY
+for the nodes.
+-----------------------------------------------------------------------------------------
+
+Exercise 4.
+-----------
+The owner of the following tables is NIKOVITS.
+
+PRODUCT(prod_id, name, color, weight)
+SUPPLIER(supl_id, name, status, address)
+PROJECT(proj_id, name, address)
+SUPPLY(supl_id, prod_id, proj_id, amount, sDate)
+
+Suppliers transport different products to the projects.
+You can see in table SUPPLY the supplier (supl_id), the product (prod_id), the project (proj_id),
+the date of the transport and the amount of the products transported on the specific date.
+
+The tables were created with the following statements:
+CREATE TABLE product(prod_id, name, color, weight) AS SELECT * FROM nikovits.cikk;
+CREATE TABLE supplier(supl_id, name, status, address) AS SELECT * FROM nikovits.szallito;
+CREATE TABLE project(proj_id, name, address) AS SELECT * FROM nikovits.projekt;
+CREATE TABLE supply(supl_id, prod_id, proj_id, amount, sDate) AS SELECT * FROM nikovits.szallit;
+GRANT select on product to public;
+GRANT select on supplier to public;
+GRANT select on project to public;
+GRANT select on supply to public;
+
+-- The tables have indexes too.
+CREATE INDEX prod_color_idx ON product(color);
+CREATE UNIQUE INDEX prod_id_idx ON product(prod_id);
+CREATE UNIQUE INDEX proj_id_idx ON PROJECT(proj_id);
+CREATE UNIQUE INDEX supplier_id_idx ON supplier(supl_id);
+CREATE INDEX supply_supplier_idx ON supply(supl_id);
+CREATE INDEX supply_proj_idx ON supply(proj_id);
+CREATE INDEX supply_prod_idx ON supply(prod_id);
+
+QUERY
+-----
+Give the sum amount of products where color = 'piros' ('piros' in Hungarian means 'red'). 
+
+Give hints in order to use the following execution plans (see hints.txt):
+
+a) no index at all
+b) one index
+c) index for both tables
+d) SORT-MERGE join
+e) NESTED-LOOPS join
+f) NESTED-LOOPS join and no index
+-----------------------------------------------------------------------------------------
+

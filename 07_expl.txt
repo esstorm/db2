@@ -1,12 +1,12 @@
 1. create PLAN_TABLE  -> running utlxplan.sql script
-   /opt/oracle/product/11.2/db_1/rdbms/admin/utlxplan.sql
    content of the script -> see below
 
 2. Execution plan into PLAN_TABLE:
-  EXPLAIN PLAN SET statement_id='st1'  -- 'st1' -> unique name of the statement
-  FOR 
-  SELECT deptno, AVG(sal) FROM emp GROUP BY deptno HAVING SUM(sal) > 9000
-  ORDER BY AVG(sal) DESC;
+   
+   EXPLAIN PLAN SET statement_id='st1'  -- 'st1' -> unique name of the statement
+   FOR 
+   SELECT deptno, AVG(sal) FROM nikovits.emp GROUP BY deptno HAVING SUM(sal) > 9000
+   ORDER BY AVG(sal) DESC;
 
 3. A hierarchical query to see the tree structure
 
@@ -17,7 +17,7 @@ START WITH id = 0 AND statement_id = 'st1'                 -- 'st1' -> unique na
 CONNECT BY PRIOR id = parent_id AND statement_id = 'st1'   -- 'st1' -> again
 ORDER SIBLINGS BY position;
 
-an other variant (50 characters only -> SUBSTR)
+another variant which shows the costs and cardinalities in nodes (50 characters only -> SUBSTR)
 
 SELECT SUBSTR(LPAD(' ', 2*(LEVEL-1))||operation||' + '||options||' + '||object_name, 1, 50) terv,
   cost, cardinality, bytes, io_cost, cpu_cost

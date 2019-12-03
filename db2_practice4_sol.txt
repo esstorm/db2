@@ -13,12 +13,12 @@ Decompress the following run-length encoded bit vector:
 1111010101001011
      ----- -  --
        21  0   3
-decompressed -> 00000000000000000000110001
+decompressed -> 000000000000000000000110001
 
 
 Oracle indexes
 --------------
-
+1.
 Give the tables (table_name) which has a column indexed in descending order.
 (In the solutions only objects of Nikovits are concerned.)
 
@@ -30,6 +30,7 @@ SELECT * FROM dba_ind_columns WHERE index_name='EMP2' AND index_owner='NIKOVITS'
 SELECT * FROM dba_ind_expressions WHERE index_name='EMP2' AND index_owner='NIKOVITS';
 
 ------------------------------------
+2.
 Give the indexes (index name) which are composite and have at least 9 columns (expressions).
 
 SELECT index_owner, index_name FROM dba_ind_columns 
@@ -39,12 +40,14 @@ GROUP BY index_owner, index_name HAVING count(*) >=9;
 SELECT * FROM dba_ind_columns WHERE index_owner='SYS' AND index_name='I_OBJ2';
 
 ------------------------------------------
-Give the name of bitmap indexes on table NIKOVITS.CUSTOMERS. (Ullman database)
+3.
+Give the name of bitmap indexes on table NIKOVITS.CUSTOMERS.
 
 SELECT * FROM dba_indexes 
 WHERE table_owner='NIKOVITS' AND table_name='CUSTOMERS' AND index_type='BITMAP';
 
 ------------------------------------------
+4.
 Give the indexes of owner NIKOVITS which has at least 2 columns and are function-based.
 
 SELECT index_owner, index_name FROM dba_ind_columns 
@@ -53,11 +56,13 @@ GROUP BY index_owner, index_name HAVING count(*) >=2
 SELECT index_owner, index_name FROM dba_ind_expressions WHERE index_owner='NIKOVITS';
 
 -----------------------------------------
+5.
 Give for one of the above indexes the expression for which the index was created.
 
 SELECT * FROM dba_ind_expressions WHERE index_owner='NIKOVITS';
 
 ---------------------------------------------------------------------------------------
+6.
 Write a PL/SQL procedure which prints out the names and sizes (in bytes) of indexes created
 on the parameter table.
 CREATE OR REPLACE PROCEDURE list_indexes(p_owner VARCHAR2, p_table VARCHAR2) IS
@@ -66,4 +71,14 @@ Test:
 -----
 set serveroutput on
 execute list_indexes('nikovits', 'emp');
-
+---------------------------------------------------------------------------------------
+7.
+Write a PL/SQL procedure which gets a file_id and block_id as a parameter and prints out the database
+object to which this datablock is allocated. (owner, object_name, object_type).
+If the specified datablock is not allocated to any objects, the procedure should print out 'Free block'.
+CREATE OR REPLACE PROCEDURE block_usage(p_fileid NUMBER, p_blockid NUMBER) IS
+...
+Test:
+-----
+set serveroutput on
+execute block_usage(2, 615);

@@ -1,0 +1,128 @@
+Exercise 17.1.1 (from textbook): 
+Suppose that the consistency constraint on the database is 0 <= A <= B. 
+Tell whether each of the following transactions preserves consistency.
+a) A := A+B; B := A+B
+b) B := A+B; A := A+B
+c) A := B+1; B := A+1
+--------------------------------------------------------------------------------
+
+Basic operations:
+Input (x):   system reads block containing x into memory
+Output (x):  system writes block containing x to disk
+Read (x,t):  read x into transaction's local variable t (input(x) if necessary)
+Write (x,t): write value of t into x in memory (input(x) if necessary)
+t:= ...      give new value to local variable t
+
+--------------------------------------------------------------------------------
+Exercise 17.1.2: 
+For each of the transactions of Exercise 17.1.1, add the
+read- and write-actions to the computation and show the effect of the steps on
+main memory and disk. Assume that initially A = 5 and B = 10.
+--------------------------------------------------------------------------------
+Exercise 17.2.1: 
+Show the UNDO-LOG records for each of the transactions (call each T) 
+of Exercise 17.1.1, assuming that initially A = 5 and B = 10.
+--------------------------------------------------------------------------------
+
+Rules of UNDO log:
+1. write log entries to disk (Write Ahead Log) [<T, ...> ... + FLUSH LOG]
+2. write modified data elements to disk [output(X)] (-> problem: too frequent output)
+3. write COMMIT log entry to log file on disk [<T, commit> + FLUSH LOG]
+
+--------------------------------------------------------------------------------
+Exercise 17.2.4: 
+The following is a sequence of undo-log records written by two transactions T and U: 
+<start T> 
+<T, A, 10> 
+<start U> 
+<U, B, 20> 
+<T, C, 30> 
+<U, D, 40>
+<T, A, 11>
+<U, B, 21>  
+<COMMIT U>
+<T, E, 50> 
+<COMMIT T>
+Describe the action of the recovery manager, including changes to both disk and the log,
+if there is a crash and the last log record to appear on disk is:
+(a) <START U> 
+(b) <C0MMIT U> 
+(c) <T, E, 50> 
+(d) <C0MMIT T>
+--------------------------------------------------------------------------------
+
+Checkpoint in UNDO LOG (simple) 
+  Decide the Checkpoint
+  Wait till all active transactions finish (no new transactions)
+  <CKPT> + FLUSH LOG
+
+Checkpoint in UNDO LOG (non-quiescent) 
+  <START CKPT(T1, T2, ... Tk)> + FLUSH LOG
+  Wait till all active transactions finish (new transactions can work)
+  <END CKPT> + FLUSH LOG
+
+For Recovery:
+Last <END CKPT> - <START CKPT> pair (-> we don't need the log before <START CKPT>)
+If we find <START CKPT(Ti)> -> first <START, Ti> 
+
+--------------------------------------------------------------------------------
+Exercise 17.3.1: 
+Show the REDO-LOG records for each of the transactions (call each T) 
+of Exercise 17.1.1, assuming that initially A = 5 and B = 10.
+--------------------------------------------------------------------------------
+
+Rules of REDO log:
+1. write log entries to disk (Write Ahead Log) [<T, ...> ... + FLUSH LOG]
+2. write COMMIT log entry to log file on disk [<T, commit> + FLUSH LOG]
+3. write modified data elements to disk [output(X)] (-> problem: too late output)
+4. write END log entry to log file on disk [<T, end> + FLUSH LOG]
+
+--------------------------------------------------------------------------------
+Exercise 17.3.3: 
+Repeat Exercise 17.2.4 for redo logging.
+--------------------------------------------------------------------------------
+
+Checkpoint (in REDO LOG)
+  <START CKPT(T1, T2, ... Tk)> + FLUSH LOG
+  Write dirty buffers of transactions committed before START CKPT to disk
+  <END CKPT> + FLUSH LOG
+
+For Recovery enough: last <END CKPT> - <START CKPT(Ti)> pair 
+First <START Ti> 
+
+--------------------------------------------------------------------------------
+Exercise 17.4.1: 
+Show the undo/redo-log records for each of the transactions (call each T) 
+of Exercise 17.1.1, assuming that initially A = 5 and B = 10.
+--------------------------------------------------------------------------------
+
+Rules of UNDO/REDO log:
+1. write log entries to disk (Write Ahead Log)
+   <T, COMMIT> can be written before OUTPUT or after OUTPUT
+
+--------------------------------------------------------------------------------
+Exercise 17.4.3: 
+The following is a sequence of undo/redo-log records written by two transactions T and U: 
+<START T>; 
+<T, A, 10, 11>; 
+<START U>;
+<U, B, 20, 21 >; 
+<T, C, 30, 31>; 
+<U, D, 40, 41>; 
+<C0MMIT U>; 
+<T, E, 50, 51>;
+<C0MMIT T>.
+Describe the action of the recovery manager, including changes to both disk and the log, 
+if there is a crash and the last log record to appear on disk is:
+(a) <START U> 
+(b) <C0MMIT U> 
+(c) <T, E, 50, 51> 
+(d) <C0MMIT T >.
+--------------------------------------------------------------------------------
+
+Checkpoint (in UNDO/REDO LOG)
+  <START CKPT(T1, T2, ... Tk)> + FLUSH LOG
+  Write all dirty buffers to disk
+  <END CKPT> + FLUSH LOG
+
+For Recovery according to UNDO or REDO rules

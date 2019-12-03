@@ -1,50 +1,60 @@
-Oracle indices, Index Organized Tables, Partitions, Clusters
-------------------------------------------------------------
+Size estimation
+---------------
 
-Give the tables (table_name) which has a column indexed in descending order.
-(In the solutions only objects of Nikovits are concerned.)
-
-See the name of the column. Why is it so strange? -> DBA_IND_EXPRESSIONS
-
-------------------------------------
-Give the indexes (index name) which are composite and have at least 9 columns (expressions).
-
--- confirm one of them
-
-------------------------------------------
-Give the bitmap indexes on table NIKOVITS.CUSTOMERS. (Only in ULLMAN database)
+1. exercise  (06_UW_query_processing.pptx 46., 57. pages)
+-----------
+T(R) = 1000000, V(R,A) = 500, V(R,B) = 1000
+Give T(W) if W is the result of the following query:
+a) W <-- SELECT * FROM R WHERE A=x;
+b) W <-- SELECT * FROM R WHERE A=x AND B=y;
+c) W <-- SELECT * FROM R WHERE A=x OR B=y;
 
 
-------------------------------------------
-Give the indexes which has at least 2 columns and are function-based.
+2. exercise  (06_UW_query_processing.pptx 52-56. pages)
+-----------
+T(R) = 10000, T(S) = 4000, common column: A, in which the same values occur.
+V(R,A) = 500, V(S,A) = 500.
+Give T(W) if W is the result of the following query:
+a) W <-- SELECT * FROM R CROSS JOIN S;
+b) W <-- SELECT * FROM R NATURAL JOIN S;
 
 
------------------------------------------
-Give for one of the above indexes the expression for which the index was created.
 
- 
------------------------------------------
+Index Organized Tables, Partitions, Clusters
+--------------------------------------------
+3.
 Give the index organized tables of user NIKOVITS.
 
 Find the table_name, index_name and overflow name (if exists) of the above tables.
 
-Which objects of the previous three has data_object_id in DBA_OBJECTS?
-
+Which objects of the previous three has not null data_object_id in DBA_OBJECTS?
 -------------------------------------------
+4.
 Give the names and sizes (in bytes) of the partitions of table NIKOVITS.ELADASOK
 
-
 -------------------------------------------
+5.
 Which is the biggest partitioned table (in bytes) in the database?
 It can have subpartitions as well.
-
 ------------------------------------------
+6.
 Give a cluster whose cluster key consists of 3 columns.
-It can have more tables on it!!!
-
+A cluster can have more than two tables on it!!!
 
 ------------------------------------------
-How many clusters we have in the database which uses NOT THE DEFAULT hash function?
+7.
+How many clusters do we have in the database which uses NOT THE DEFAULT hash function?
 (So the creator defined a hash expression.)
 
-
+------------------------------------------
+8.
+Write a PL/SQL procedure which prints out the storage type (heap organized, partitioned, index organized or clustered) 
+for the parameter table.
+CREATE OR REPLACE PROCEDURE print_type(p_owner VARCHAR2, p_table VARCHAR2) IS
+...
+Test:
+-----
+set serveroutput on
+execute print_type('nikovits', 'eladasok5');
+execute print_type('nikovits', 'cikk_iot');
+execute print_type('nikovits', 'emp_clt');

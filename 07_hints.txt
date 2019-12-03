@@ -1,0 +1,132 @@
+Operation and option together   (from PLAN_TABLE)
+-----------------------------
+
+See further Oracle Documentation 12c
+book -> Oracle Database SQL Tuning Guide
+Hints: book -> SQL Language Reference -> 2. Basic Elements of Oracle SQL -> Comments -> Hints
+
+
+TABLE ACCESS FULL
+             HASH
+             CLUSTER
+             BY INDEX ROWID
+             BY USER ROWID
+             BY GLOBAL INDEX ROWID
+             BY LOCAL INDEX ROWID
+
+PARTITION RANGE ALL        -- reading all partitions
+PARTITION RANGE SINGLE     -- reading only a single partition
+PARTITION RANGE ITERATOR   -- reading several partitions
+INLIST ITERATOR            -- iteration of some operations
+
+SORT AGGREGATE             -- only aggregate, no group by
+     UNIQUE                -- duplicate elimination
+     GROUP BY              -- 
+     JOIN                  -- sorting before a join
+     ORDER BY              -- sorting for an order by
+
+HASH UNIQUE
+HASH GROUP BY
+
+UNION-ALL
+MINUS
+CONCATENATION              -- union of two rowsets
+VIEW
+FILTER                     -- filtering a rowset
+
+NESTED LOOPS               -- join operation
+MERGE JOIN                 -- merging the sorted runs
+HASH JOIN
+HASH JOIN OUTER
+HASH JOIN ANTI             -- in case of not exists
+HASH JOIN SEMI             -- in case of exists
+
+INDEX FULL SCAN            -- full scan of leaf nodes in ascending order
+INDEX FULL SCAN DESCENDING -- full scan of leaf nodes in descending order
+INDEX FAST FULL SCAN       -- full scan of index blocks, not in order
+INDEX RANGE SCAN           -- interval search 
+INDEX UNIQUE SCAN          -- unique search
+INDEX SKIP SCAN            -- searching a composite index
+
+AND-EQUAL                  -- intersection of rowid sets
+
+BITMAP INDEX SINGLE VALUE      -- searching for a single bit vector
+BITMAP AND                     -- logical AND between bit vectors
+BITMAP OR                      -- logical OR between bit vectors
+BITMAP CONVERSION TO ROWIDS    -- 
+BITMAP CONVERSION FROM ROWIDS  -- 
+BITMAP CONVERSION COUNT        -- if we need only the number of rowids
+
+INLIST ITERATOR            -- iteration
+
+
+Hints to the optimizer
+
+[SELECT|DELETE|UPDATE|INSERT]   /*+  list of hints  */    (no space in front of '+' !!! )
+
+Examples:
+SELECT /*+ list of hints */  * FROM emp WHERE ...
+SELECT /*+ list of hints */  * FROM emp WHERE deptno IN ( SELECT /*+ list of hints */  deptno FROM ...)
+INSERT /*+ list of hints */  ... SELECT /*+ list of hints */  ...
+SELECT /*+ list of hints */  ...  UNION  SELECT /*+ list of hints */  ...
+
+Use alias in hint in the following case !!!
+  SELECT /*+ full(c) */ ... FROM nikovits.cikk c ...
+
+
+
+Some important hints
+
+ALL_ROWS
+Optimizing for best throughput
+
+FIRST_ROWS(n)  
+Optimizing for best response time
+
+FULL(table)   or  FULL(alias)
+Full table scan without any index
+
+INDEX(table  [index list])
+Using the specified index, or the best from the list. If not given, dbms selects one from all.
+
+INDEX_ASC(table  [index list])
+Ascending order search
+
+INDEX_DESC(table  [index list])
+
+AND_EQUAL(table  [index list])
+Intersection of rowid sets
+
+NO_INDEX(table  [index list])
+Not using the specified indexes
+
+USE_CONCAT
+Create a union from the WHERE conditions if they can be accessed by index
+
+LEADING(table list)
+Begins execution with the given tables
+
+ORDERED
+Joins the tables in the order after FROM keyword
+
+USE_HASH(table list)
+Hash join for the given tables
+NO_USE_HASH(table list)
+Just the opposite
+
+USE_NL(table list)
+Nested Loop join for the given tables
+NO_USE_NL(table list)
+Just the opposite
+
+USE_MERGE(table list)
+Sort-Merge join for the given tables
+NO_USE_MERGE(table list) 
+Just the opposite
+
+NL_SJ, HASH_SJ, MERGE_SJ
+NL_AJ, HASH_AJ, MERGE_AJ
+Hints used in a subquery for antijoin or semijoin
+
+
+

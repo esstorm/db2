@@ -26,7 +26,7 @@ JOB_HISTORY
 
 - See DBA_TAB_COLUMNS
 
- CREATE TABLE proba1
+ CREATE TABLE test123
   (c10 CHAR(10) DEFAULT 'bubu',   vc20 VARCHAR2(20),     blo BLOB,
    num NUMBER,                    num10_2 NUMBER(10,2),  num10 NUMBER(10) DEFAULT 100,  
    dat DATE DEFAULT TO_DATE('2007.01.01', 'yyyy.mm.dd'), rid ROWID);
@@ -34,7 +34,7 @@ JOB_HISTORY
  Querying the above table:
 
  SELECT column_id, column_name, data_type, data_length, data_precision, data_scale, data_default
- FROM dba_tab_columns WHERE owner='NIKOVITS' AND table_name='PROBA1' ORDER BY column_id;
+ FROM dba_tab_columns WHERE owner='NIKOVITS' AND table_name='TEST123' ORDER BY column_id;
 
 c_id  c_name  data_type  data_length  prec   scale    data_default
 ----------------------------------------------------------------------------------------
@@ -124,7 +124,7 @@ TABLA_123	TABLE		4	1992       8
 The above table has 4 extents in two different data files (file_id=4, file_id=6).
 
 
-8. Which objects have segment and which don't have?
+8. Which objects have segments and which don't have?
 
  See OBJECT_ID and DATA_OBJECT_ID in DBA_OBJECTS.
  If DATA _OBJECT_ID is NULL or 0 -> no segment
@@ -171,8 +171,7 @@ ENAME      DATAOBJ                FILENUM  BLOCK_NUM  ROW_NUM
 ---------- ---------------------- -------  ---------  -------
 KING       248453                 6        54988      19   
 
-First two numbers can be found in DBA_OBJECTS.DATA_OBJECT_ID and DBA_DATA_FILES. FILE_ID
-columns.
+First two numbers can be found in DBA_OBJECTS.DATA_OBJECT_ID and DBA_DATA_FILES.FILE_ID columns.
 
  SELECT owner, object_name, object_type FROM dba_objects WHERE data_object_id=248453;
 

@@ -4,26 +4,27 @@ Database objects
 ----------------
 (DBA_OBJECTS)
 
+1.
 Who is the owner of the view DBA_TABLES? Who is the owner of table DUAL?
-
+2.
 Who is the owner of synonym DBA_TABLES? (or DUAL)
-
+3.
 What kind of objects the database user ORAUSER has? (dba_objects.object_type column)
  SELECT distinct object_type FROM dba_objects
  WHERE owner='ORAUSER';
-
+4.
 What are the object types existing in the database?
  SELECT distinct object_type FROM dba_objects;
-
+5.
 Which users have more than 10 different kind of objects in the database?
-
+6.
 Which users have both triggers and views in the database?
-
+7.
 Which users have views but don't have triggers?
  SELECT distinct owner FROM dba_objects WHERE object_type='VIEW'
   MINUS
  SELECT distinct owner FROM dba_objects WHERE object_type='TRIGGER';
-
+8.
 Which users have more than 40 tables, but less than 30 indexes?
  SELECT distinct owner FROM dba_objects WHERE object_type='TABLE'
  GROUP BY owner
@@ -32,13 +33,14 @@ Which users have more than 40 tables, but less than 30 indexes?
  SELECT distinct owner FROM dba_objects WHERE object_type='INDEX'
  GROUP BY owner
  HAVING count(*) >= 30;
-
+9.
 Let's see the difference between a table and a view (dba_objects.data_object_id).
-
+ A Table needs storage, a View doesn't need. Only the definition is stored in data dictionary.
+10.
 Which object types have NULL (or 0) in the column data_object_id?
-
+11.
 Which object types have non NULL (and non 0) in the column data_object_id?
-
+12.
 What is the intersection of the previous 2 queries?
 
 
@@ -46,19 +48,19 @@ What is the intersection of the previous 2 queries?
 Columns of a table
 ------------------
 (DBA_TAB_COLUMNS)
-
+13.
 How many columns the nikovits.emp table has?
-
+14.
 What is the data type of the 6th column of nikovits.emp's table?
-
+15.
 Give the owner and name of the tables which have column name beginning with letter 'Z'.
-
+16.
 Give the owner and name of the tables which have at least 8 date columns.
  SELECT owner, table_name FROM dba_tab_columns
  WHERE data_type='DATE'
  GROUP BY owner, table_name
  HAVING count(*) >= 8;
-
+17.
 Give the owner and name of the tables whose 1st and 4th column's datatype is VARCHAR2.
  SELECT owner, table_name FROM dba_tab_columns
  WHERE column_id=1 AND data_type='VARCHAR2'
@@ -77,3 +79,18 @@ execute table_print('V'); (you can use execute or call)
 -- Help:
 -- Use a cursor to print out the data from the result set of a SELECT statement.
 
+create or replace PROCEDURE table_print(p_char VARCHAR2) is
+  CURSOR curs1 IS 
+  select owner, table_name from dba_tables
+  where upper(table_name) like upper(p_char)||'%';
+  rec curs1%ROWTYPE;
+BEGIN
+  OPEN curs1;
+  LOOP
+    FETCH curs1 INTO rec;
+    EXIT WHEN curs1%NOTFOUND;
+    dbms_output.put_line(rec.owner||' - '||rec.table_name);
+  END LOOP;
+  CLOSE curs1;
+END;
+/

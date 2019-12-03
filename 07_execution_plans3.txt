@@ -1,0 +1,176 @@
+Some special objects (BITMAP, IOT, PARTITION, HISTOGRAM)
+
+Bitmap index
+CREATE BITMAP INDEX pkod_bm ON szallit(pkod);
+CREATE BITMAP INDEX szkod_bm ON szallit(szkod);
+
+select * from szallit where pkod=10 and szkod=12;
+------------------------------------------------
+ SELECT STATEMENT
+   TABLE ACCESS BY INDEX ROWID SZALLIT
+     BITMAP CONVERSION TO ROWIDS
+       BITMAP AND
+         BITMAP INDEX SINGLE VALUE PKOD_BM
+         BITMAP INDEX SINGLE VALUE SZKOD_BM
+
+
+Index organized table
+CREATE TABLE cikk_iot
+  ( ckod integer,
+    cnev varchar2(20),
+    szin varchar2(15),
+    suly float,
+       CONSTRAINT cikk_iot_pk PRIMARY KEY (ckod)  )
+ORGANIZATION INDEX
+PCTTHRESHOLD 20 INCLUDING cnev
+OVERFLOW TABLESPACE system;
+
+select * from cikk_iot where szin='piros';
+-----------------------------------------
+SELECT STATEMENT
+  INDEX FAST FULL SCAN CIKK_IOT_PK
+
+select * from cikk_iot where ckod between 10 and 20;
+---------------------------------------------------
+SELECT STATEMENT
+  INDEX RANGE SCAN CIKK_IOT_PK
+
+
+Partitioned table and index
+CREATE TABLE szallit_part 
+  ( szkod integer, 
+    ckod  integer,
+    pkod  integer,
+    mennyiseg integer,
+    datum  date)
+PARTITION BY RANGE ( ckod )  
+  (PARTITION sz1 VALUES LESS THAN  ( 200 ), 
+   PARTITION sz2 VALUES LESS THAN  ( 500 ), 
+   PARTITION sz3 VALUES LESS THAN  ( 800 ),
+   PARTITION sz4 VALUES LESS THAN  ( MAXVALUE) );
+
+-- Below it reads only 1 partition
+  (see -> PARTITION_START, PARTITION_STOP columns)
+select sum(mennyiseg) from szallit_part where ckod=1;
+----------------------------------------------------
+SELECT STATEMENT
+   SORT AGGREGATE
+     PARTITION RANGE SINGLE
+       TABLE ACCESS FULL SZALLIT_PART
+
+-- Below it reads all partitions
+select sum(mennyiseg) from szallit_part where ckod+1=2;
+------------------------------------------------------
+ SELECT STATEMENT
+   SORT AGGREGATE
+     PARTITION RANGE ALL
+       TABLE ACCESS FULL SZALLIT_PART
+
+
+-- Partitioned local index (prefixed)
+CREATE INDEX loc_i ON szallit_part(ckod)
+LOCAL (PARTITION sz1_i,
+       PARTITION sz2_i,
+       PARTITION sz3_i,
+       PARTITION sz4_i);
+
+-- Partitioned local index (not prefixed)
+CREATE INDEX loc_i2 ON szallit_part(datum)
+LOCAL (PARTITION sz1_i2,
+       PARTITION sz2_i2,
+       PARTITION sz3_i2,
+       PARTITION sz4_i2);
+
+select sum(mennyiseg) from szallit_part where ckod=1;
+----------------------------------------------------
+SELECT STATEMENT
+  SORT AGGREGATE
+    TABLE ACCESS BY LOCAL INDEX ROWID SZALLIT_PART
+      INDEX RANGE SCAN LOC_I
+
+select sum(mennyiseg) from szallit_part where ckod=1 or ckod=601;
+----------------------------------------------------------------
+SELECT STATEMENT
+  SORT AGGREGATE
+    INLIST ITERATOR
+      PARTITION RANGE ITERATOR
+        TABLE ACCESS BY LOCAL INDEX ROWID SZALLIT_PART
+          INDEX RANGE SCAN LOC_I
+
+-- Below it reads all partitions of the index
+SELECT SUM(mennyiseg) FROM SZALLIT_PART WHERE datum=TO_DATE('2003-12-01', 'yyyy-mm-dd');
+---------------------------------------------------------------------------------------
+SELECT STATEMENT
+  SORT AGGREGATE
+    PARTITION RANGE ALL
+      TABLE ACCESS BY LOCAL INDEX ROWID SZALLIT_PART
+        INDEX RANGE SCAN LOC_I2
+
+
+-- Partitioned global index (prefixed)
+CREATE INDEX glob_i ON szallit_part(pkod, szkod) 
+   GLOBAL PARTITION BY RANGE (pkod)
+     (PARTITION pkod_1 VALUES LESS THAN (10),
+      PARTITION pkod_2 VALUES LESS THAN (MAXVALUE));
+
+-- Below it reads only 1 partition of the index
+select sum(mennyiseg) from szallit_part where pkod=1;
+----------------------------------------------------
+SELECT STATEMENT
+  SORT AGGREGATE
+    PARTITION RANGE SINGLE
+      TABLE ACCESS BY GLOBAL INDEX ROWID SZALLIT_PART
+        INDEX RANGE SCAN GLOB_I
+
+
+-- Below it reads all partitions (based on datum)
+-- and only 1 partition based on ckod
+
+SELECT SUM(mennyiseg) FROM SZALLIT_PART WHERE datum=SYSDATE OR (ckod=1 OR ckod=601);
+-----------------------------------------------------------------------------------
+SELECT STATEMENT
+  SORT AGGREGATE
+    CONCATENATION
+      INLIST ITERATOR
+        PARTITION RANGE ITERATOR
+          TABLE ACCESS BY LOCAL INDEX ROWID SZALLIT_PART
+            INDEX RANGE SCAN LOC_I
+      PARTITION RANGE ALL
+        TABLE ACCESS BY LOCAL INDEX ROWID SZALLIT_PART
+          INDEX RANGE SCAN LOC_I2
+
+
+
+-- Creating statistict
+-- It fills user_tables, user_tab_columns (user_tab_col_statistics) and user_histograms tables
+ANALYZE TABLE szallit COMPUTE STATISTICS;
+
+-- Number of intervals in a histogram -> size
+ANALYZE TABLE szallit COMPUTE STATISTICS FOR COLUMNS ckod SIZE 15;
+
+-- Deleting statistics
+ANALYZE TABLE szallit DELETE statistics;
+
+-- We can use DBMS_STATS package (preferred way) for creating, deleting statistics
+
+CALL dbms_stats.gather_table_stats('nikovits','szallit');
+CALL dbms_stats.delete_table_stats('nikovits','szallit');
+CALL dbms_stats.delete_column_stats('nikovits','szallit', 'ckod');
+BEGIN
+ dbms_stats.gather_table_stats('NIKOVITS', 'SZALLIT', method_opt => 'FOR COLUMNS ckod SIZE 15' );
+END;
+
+
+-- Querying statistics
+select table_name, num_rows from user_tables where num_rows is not null;
+
+-- density column shows selectivity, histogram shows type of histogram (FREQUENCY, HEIGHT BALANCED)
+select table_name, column_name, num_distinct, low_value, high_value,
+       num_nulls, density, num_buckets, histogram
+from user_tab_columns where num_distinct is not null;
+
+-- querying histogram intervals
+select table_name, column_name, endpoint_number, endpoint_value
+from user_histograms order by 1,2,3;
+
+

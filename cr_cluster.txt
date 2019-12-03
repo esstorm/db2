@@ -1,3 +1,5 @@
+-- Please focus on the keywords of the statements, not on the table and column names!
+
 -- Information about clusters (in data dictionary views): 
 -- DBA_CLUSTERS 
 -- DBA_TABLES (cluster_name -> which cluster) 
@@ -28,7 +30,7 @@ CREATE TABLE dept_clt
   (deptno NUMBER(2), dname VARCHAR2(42), loc VARCHAR2(39))
 CLUSTER personnel_cl (deptno);
 
--- Creating cluster index (only after index creation can we insert rows):
+-- Creating cluster index (we can insert rows only after index creation):
 CREATE INDEX personnel_cl_idx ON CLUSTER personnel_cl;
 INSERT INTO emp_clt SELECT * FROM emp;
 INSERT INTO dept_clt SELECT * FROM dept;
@@ -131,7 +133,7 @@ CIKK_HCLT         TABLE      100651     100650
 CIKK_HCL          CLUSTER    100650     100650
 
 
-We can see that only the cluster has segment.
+We can see that only the cluster has a segment, the tables are stored on the cluster's segment.
 
 SELECT segment_name, segment_type, bytes 
 FROM dba_segments WHERE owner='NIKOVITS'

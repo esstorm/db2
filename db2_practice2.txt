@@ -53,34 +53,34 @@ grant select on rivers_v to public;
 Oracle storage concepts
 -----------------------
 (DBA_TABLES, DBA_DATA_FILES, DBA_TEMP_FILES, DBA_TABLESPACES, DBA_SEGMENTS, DBA_EXTENTS, DBA_FREE_SPACE)
-
+1.
 Give the names and sizes of database files. (file_name, size_in_bytes)
-
+2.
 Give the names of tablespaces. (tablespace_name)
-
+3.
 Which datafile belongs to which tablespace? (filename, tablespace_name)
-
+4.
 Is there a tablespace that doesn't have datafiles? -> see temp_files
-
+5.
 What is the block size in USERS tablespace? (block_size)
-
+6.
 Find some segments whose owner is NIKOVITS. What segment types do they have? List the types. (segment_type)
-
-How many extents there are in file 'users01.dbf' ? (no_extents)
+7.
+How many extents there are in file 'users02.dbf' ? (num_extents)
 How many bytes do they occupy? (sum_bytes)
-
-How many free extents there are in file 'users01.dbf', and what is the summarized size of them ? (num, sum_bytes)
-How many percentage of file 'users01.dbf' is full (allocated to some object)?
-
+8.
+How many free extents there are in file 'users02.dbf', and what is the summarized size of them ? (num, sum_bytes)
+How many percentage of file 'users02.dbf' is full (allocated to some object)?
+9.
 Who is the owner whose objects occupy the most space in the database? (owner, sum_bytes)
-
+10.
 Is there a table of owner NIKOVITS that has extents in more than one datafile? (table_name)
 Select one from the above tables (e.g. tabla_123) and give the occupied
 space by files. (filename, bytes)
-
+11.
 On which tablespace is the table ORAUSER.dolgozo?
-On which tablespace is the table NIKOVITS.eladasok? Why NULL? (-> Ullman database)
- (partitioned table, stored on more than 1 tablespace)
+On which tablespace is the table NIKOVITS.eladasok? Why NULL? 
+ (-> partitioned table, stored on more than 1 tablespace)
 
 
 Write a PL/SQL procedure, which prints out for the parameter user his/her oldest table (which was created earliest)
@@ -88,5 +88,5 @@ the size of the table in bytes (the size of the table's segment) and the creatio
 CREATE OR REPLACE PROCEDURE oldest_table(p_user VARCHAR2) IS 
 ...
 SET SERVEROUTPUT ON
-execute oldest_table('ORAUSER');
+execute oldest_table('NIKOVITS');
 

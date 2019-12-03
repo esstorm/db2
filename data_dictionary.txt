@@ -21,6 +21,7 @@ IOT_NAME         in case of Index Organised Table
 NUM_ROWS         estimated (!)
 BLOCKS           estimated (!)
 IOT_TYPE         IOT or IOT_OVERFLOW (in case of Index Organised Table)
+PARTITIONED      YES/NO (is it a partitioned table or no)
 
 DBA_TAB_COLUMNS
 ---------------

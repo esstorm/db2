@@ -1,0 +1,64 @@
+The tables below are created only in ARAMIS database
+
+Data about telephone calls
+--------------------------
+The views are created in schema NIKOVITS, you don't have to create them.
+
+create view tel_center_v(district, c_id, c_name) as select * from kozpont;                        ~ 1250 rows
+create view primer_v(district, city, provider, county) as select * from primer;                   ~ 70 rows
+create view calls_v(calling_id, receiving_id, service, call_date, call_hour, no_calls, seconds)   ~ 45M rows
+ as select * from hivas;
+create view calls_v2(calling_id, receiving_id, service, call_date, call_hour, no_calls, seconds)  ~ 45M rows
+ as select * from hivas_v2;
+
+Some queries and their runtime. Let's see the execution plans, especially the costs.
+------------------------------------------------------------------------------------
+CALLS_V    partitioned table
+CALLS_V2   not partitioned, but will be indexed
+
+--230 sec  I created an index for the table.
+create index hivas_datum_idx on hivas_v2(datum);
+
+-- 4 sec  Full Table scan
+select sum(seconds) from calls_v;
+
+-- 4 sec  No advantage from partitioning, because we read all rows from the table.
+select sum(seconds) from calls_v2;
+
+
+-- 0.5 sec  We read only 1 partition, it is much faster
+select sum(seconds) from calls_v where call_date = to_date('2012.01.31', 'yyyy.mm.dd');
+
+-- 10 sec  We read all the partitions, because of the '+1'
+select sum(seconds) from calls_v where call_date + 1 = to_date('2012.01.31', 'yyyy.mm.dd') + 1;
+
+-- 0.1 sec  Index scan
+select sum(seconds) from calls_v2 where call_date = to_date('2012.01.31', 'yyyy.mm.dd');
+
+-- 2 sec  Index scan, a lot of rows
+select sum(seconds) from calls_v2 where call_date between 
+       to_date('2012.01.31', 'yyyy.mm.dd') and to_date('2012.02.20', 'yyyy.mm.dd');
+
+-- 0,03 sec  Index reading only without reading the table, very fast
+select count(*) from calls_v2 where call_date = to_date('2012.01.31', 'yyyy.mm.dd');
+
+-- 3 sec  INDEX FAST FULL SCAN
+select count(*) from calls_v2;
+
+-- 2 sec  Hint improves performance !!! Optimizer fails to find the best plan.
+select /*+ no_index(calls_v2) */ count(*) from calls_v2;
+
+
+You can better evaluate and compare the efficiency of the queries if you run them several times
+and compute the average run time.
+
+DECLARE
+  v_result NUMBER;
+BEGIN
+  FOR i IN 1 .. 10 LOOP
+    SELECT /*+ no_index(calls_v2) */ count(*) INTO v_result from calls_v2;
+  END LOOP;
+END;
+/
+
+

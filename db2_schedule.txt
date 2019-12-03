@@ -8,12 +8,9 @@ Connecting to Oracle database server.
 Overview of the topics of the semester, basic info about the tests (practice) and exam (lecture).
 (db2_readme.txt)
 
-This course is based on Database I course, for which you can find material on my homepage:
+This course is strongly based on Database I course, for which you can find material on my homepage:
 http://people.inf.elte.hu/nikovits/DB1/
-
-Some review of SQL, PL/SQL
-Recursion in queries (see Database1 course, db1_recursion.txt)
-db2_practice0.txt
+Please refresh your knowledge about SQL and PL/SQL !!!
 
 
 1st lecture
@@ -32,7 +29,7 @@ Physical storage organization; Physical storage media types (memory, disk, tape)
 How do disks work? RAID technology; Buffer management;
 Page organization, record organization;
 Unordered files (heap), ordered files, hashed files (a brief overview)
-(02_storage.ppt, 02_RAID.doc, 02_Select_execution.ppt, 02_UW_File_structure.ppt)
+(02_storage.pptx, 02_RAID.docx, 02_Select_execution.pptx, 02_UW_File_structure.pptx)
 
 Practice:
 db2_practice2.txt, data_dictionary.txt, db2_help.txt
@@ -40,9 +37,9 @@ db2_practice2.txt, data_dictionary.txt, db2_help.txt
 3rd lecture
 -----------
 Indexing; Sparse index, dense index, primary index, secondary index;
-Multi-level index, B+ tree;
-Difference between a B tree and a B+ tree.
-(03_UW_Indexing.ppt, 03_B_tree.doc)
+Multi-level index, B+ tree; Difference between a B tree and a B+ tree.
+Bitmap index
+(03_UW_Indexing.pptx, 03_B_tree.docx, 03_Bitmap_indexes.pptx)
 
 Practice:
 Using dynamic SQL statements in PL/SQL (pl_dynamicSQL.txt)
@@ -51,8 +48,8 @@ db2_practice3.txt, db2_help.txt
 4th lecture
 -----------
 Hashing; Static hashing; Dynamic hashing; Linear hashing, Extensible hashing
-(04_UW_Hashing.ppt, 04_Oracle_concepts2.docx, 04_Dynamic_hashing.doc)
-Bitmap index (04_Bitmap_indexes.ppt)
+(04_UW_Hashing.pptx, 04_Oracle_concepts2.docx, 04_Dynamic_hashing.docx)
+Bitmap index cont. (03_Bitmap_indexes.pptx)
 
 Practice:
 db2_practice4.txt, 04_cr_index.txt, db2_oracle_examples.doc, 
@@ -62,29 +59,71 @@ db2_practice4.txt, 04_cr_index.txt, db2_oracle_examples.doc,
 Query processing and optimization. Cost of operations.
 Algorithms based on sorting; Nested-loop joins; Index-based join;
 Sort-Merge join; Hash-join;
-(05_optimization.ppt, 05_operation_cost_examples.ppt, 05_special_storage.ppt) 
+(05_optimization.pptx, 05_operation_cost_examples.pptx, 05_special_storage.pptx) 
 
 Practice:
 db2_practice5.txt
-cr_part_table.txt, cr_cluster.txt, cr_part_index.txt (see 05_special_storage.ppt)
+cr_part_table.txt, cr_cluster.txt, cr_part_index.txt (see 05_special_storage.pptx)
 
 6th lecture
 -----------
 Query optimization. Relational algebra transformations, size estimation.
-(06_UW_query_processing.ppt)
+(06_UW_query_processing.pptx)
+Overview of the material so far.
 
 Practice:
-Completing db2_practice0.txt and recursion in queries
 db2_practice6.txt
+runtime_example.txt
 
 7th lecture
 -----------
-execution plans and hints (07_tuning.ppt)
+execution plans and hints (07_tuning.pptx)
 (07_expl.txt, 07_execution_plans1.txt, 07_execution_plans2.txt, 
 07_execution_plans3.txt, 07_execution_plans4.txt, 07_hints.txt)
+Recursion in queries. (07_recursion.txt)
 
 Practice:
-1st Test -> november 12th
+1st Test -> October 22nd
 
+8th lecture
+-----------
+execution plans and hints cont.
+(07_expl.txt, 07_execution_plans1.txt, 07_execution_plans2.txt, 
+07_execution_plans3.txt, 07_execution_plans4.txt, 07_hints.txt)
+Recursion in queries. (07_recursion.txt)
+Runtime examples: (runtime_example.txt, runtime_example2.txt)
 
+Practice:
+db2_practice7.txt
 
+9th lecture
+-----------
+Consistency, failures, logging, recovery
+(08_UW_Crash_recovery.pptx)
+
+Practice:
+db2_practice8.txt
+
+10th lecture
+-----------
+Concurrency control; schedule, serializable, conflict-serializable, precedence graph
+(10_UW_Concurrency.pptx pages 1-50)
+
+Practice:
+db2_practice9.txt
+
+11th lecture
+-----------
+Concurrency control (cont.)
+(10_UW_Concurrency.pptx)
+
+Practice:
+db2_practice10.txt
+
+12th lecture
+-----------
+Summary, help for the exam
+(Exam_questions.docx)
+
+Practice:
+2nd test -> December 3rd

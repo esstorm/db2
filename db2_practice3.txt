@@ -14,24 +14,25 @@ A-Z -> (0-25), a-z -> (26-51), 0-9 -> (52-61), '+' -> (62), '/' -> (63)
 
 eg. 'AAAAAB' -> 000001
 
-
+1.
 How many data blocks are allocated in the database for the table NIKOVITS.CIKK?
 There can be empty blocks, but we count them too.
 The same question: how many data blocks does the segment of the table have?
-
+2.
 How many filled data blocks does the previous table have?
 Filled means that the block is not empty (there is at least one row in it).
 This question is not the same as the previous !!!
 How many empty data blocks does the table have?
-
+3.
 How many rows are there in each block of the previous table?
-
-There is a table NIKOVITS.ELADASOK@ullman which has the following row:
+4.
+There is a table NIKOVITS.ELADASOK which has the following row:
 szla_szam = 100 (szla_szam is a column name)
 In which datafile is the given row stored?
 Within the datafile in which block? (block number) 
 In which data object? (Give the name of the segment.)
 -------------------------------------------------------
+5.
 Write a PL/SQL procedure which prints out the number of rows in each data block for the 
 following table: NIKOVITS.TABLA_123. The output has 3 columns: file_id, block_id, num_of_rows.
 CREATE OR REPLACE PROCEDURE num_of_rows IS 
@@ -42,9 +43,10 @@ SET SERVEROUTPUT ON
 execute num_of_rows();
 
 Hint:
-Find the extents of the table. You can find the first block and the size in blocks.
-Check the individual blocks how many rows they contain. (use rowid)
+Find the extents of the table. You can find the first block of the extents and the sizes in blocks
+in DBA_EXTENTS. Check the individual blocks, how many rows they contain. (use rowid)
 -------------------------------------------------------
+6.
 Write a PL/SQL procedure which counts and prints the number of empty blocks of a table.
 CREATE OR REPLACE PROCEDURE empty_blocks(p_owner VARCHAR2, p_table VARCHAR2) IS
 ...

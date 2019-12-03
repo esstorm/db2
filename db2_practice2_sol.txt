@@ -55,27 +55,27 @@ WHERE r.rname = 'Mekong' AND r.countries LIKE '%'||c.tld||'%';
 Oracle storage concepts
 -----------------------
 (DBA_TABLES, DBA_DATA_FILES, DBA_TEMP_FILES, DBA_TABLESPACES, DBA_SEGMENTS, DBA_EXTENTS, DBA_FREE_SPACE)
-
+1.
 Give the names and sizes of database files.
 SELECT file_name, bytes FROM dba_data_files;
-
+2.
 Give the names of tablespaces.
 SELECT tablespace_name FROM dba_tablespaces;
-
+3.
 Which datafile belongs to which tablespace? (filename, tablespace_name)
 SELECT file_name, tablespace_name FROM dba_data_files;
-
+4.
 Is there a tablespace that doesn't have datafiles? -> see temp_files
 SELECT tablespace_name FROM dba_tablespaces WHERE tablespace_name NOT IN
  (SELECT tablespace_name FROM dba_data_files);
 SELECT file_name, tablespace_name FROM dba_temp_files;
-
+5.
 What is the block size in USERS tablespace?
-
+6.
 Find some segments whose owner is NIKOVITS. What segment types do they have? List the types.
 SELECT segment_name, segment_type FROM dba_segments WHERE owner='NIKOVITS';
 SELECT distinct segment_type FROM dba_segments WHERE owner='NIKOVITS';
-
+7.
 How many extents there are in file 'users02.dbf' ?
 SELECT * from dba_data_files where file_name like '%/users02%';
 SELECT * from dba_extents where file_id=2;                      -- if file_id is 2
@@ -84,10 +84,11 @@ SELECT count(*) from dba_extents where file_id=2;
 SELECT count(*) FROM dba_data_files f, dba_extents e
 WHERE file_name like '%/users02%' AND f.file_id=e.file_id;
 
-How many bytes do they (extents in the file) occupy?
+How many bytes do they (the extents in the file) occupy?
 SELECT sum(e.bytes) FROM dba_data_files f, dba_extents e
 WHERE file_name LIKE '%/users02%' AND f.file_id=e.file_id;
 
+8.
 How many free extents there are in file 'users02.dbf', and what is the summarized size of them ?
 SELECT count(fr.bytes), sum(fr.bytes), f.bytes 
 FROM dba_data_files f, dba_free_space fr
@@ -99,6 +100,7 @@ SELECT sum(e.bytes)/f.bytes FROM dba_data_files f, dba_extents e
 WHERE file_name LIKE '%/users02%' AND f.file_id=e.file_id
 GROUP BY f.bytes;
 
+9.
 Who is the owner whose objects (e.g. INDEXES) occupy the most space in the database?
 --> the first row will show
 SELECT owner, sum(bytes) from dba_segments 
@@ -106,12 +108,11 @@ WHERE segment_type = 'INDEX'
 GROUP BY owner order by 2 desc;
 
 -- If we want only the first row:
-SELECT * FROM 
- (select owner, sum(bytes) from dba_segments 
-  where segment_type = 'INDEX'
-  group by owner order by 2 desc)
-WHERE rownum < 2;
+SELECT owner, sum(bytes) from dba_segments 
+WHERE segment_type = 'INDEX'
+GROUP BY owner order by 2 desc FETCH FIRST 1 ROWS ONLY;
 
+10.
 Is there a table of owner NIKOVITS that has extents in more than one datafile? (Aramis)
 SELECT segment_name, count(distinct file_id)
 FROM dba_extents WHERE owner='NIKOVITS' AND segment_type='TABLE'
@@ -120,15 +121,16 @@ GROUP BY segment_name HAVING count(distinct file_id) > 1;
 Select one from the above tables (e.g. tabla_123) and give the occupied
 space by files. (filename, bytes)
 
+11.
 On which tablespace is table ORAUSER.dolgozo?
-On which tablespace is table NIKOVITS.eladasok? Why NULL?  (Ullman database)
+On which tablespace is table NIKOVITS.eladasok? Why NULL?
 -------------------------------------------------------
 Write a PL/SQL procedure, which prints out for the parameter user his/her oldest table (which was created earliest)
 the size of the table in bytes (the size of the table's segment) and the creation date. (table_name, bytes, created)
 CREATE OR REPLACE PROCEDURE oldest_table(p_user VARCHAR2) IS 
 ...
 SET SERVEROUTPUT ON
-EXECUTE oldest_table('ORAUSER');
+EXECUTE oldest_table('NIKOVITS');
 
 Hint:
 Find the creation date of the object (table) in DBA_OBJECTS, then find the segment(s) of the table

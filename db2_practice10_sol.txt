@@ -1,0 +1,136 @@
+Exercise 1.
+We have the following 3 transactions. Give the possible values of data element X after
+the execution of the transactions, if the schedule is serial and the initial value of X = 100.
+T1: READ(X,t); t:=t+100; WRITE(X,t);
+T2: READ(X,t); t:=t*2; WRITE(X,t);
+T3: READ(X,t); t:=t+10; WRITE(X,t);
+
+T1,T2,T3 -> 410, T1,T3,T2 -> 420
+T2,T1,T3 -> 310, T2,T3,T1 -> 310
+T3,T1,T2 -> 420, T3,T2,T1 -> 320
+--------------------------------------------------------------------------------
+Exercise 18.1.2: 
+If two transactions consist of 4 and 6 actions, respectively,
+how many interleavings of these transactions are there?
+
+-> 10!/(6!*4!)
+--------------------------------------------------------------------------------
+Exercise 18.2.1: 
+Below are two transactions, described in terms of their effect on two database elements A and B, 
+which we may assume are integers.
+T1: READ(A,t); t:= t+2; WRITE(A,t); READ(B,t); t:= t*3; WRITE(B,t);
+T2: READ(B,s); s:= s*2; WRITE(B,s); READ(A,s); s:= s+3; WRITE(A.s);
+
+We assume that, whatever consistency constraints there are on the database,
+these transactions preserve them in isolation. Note that A = B is not the
+consistency constraint.
+
+a) It turns out that both serial orders have the same effect on the database;
+   that is, (T1 ,T2) and (T2,T1) are equivalent. Demonstrate this fact by showing the effect 
+   of the two transactions on an arbitrary initial database state.
+-> From A -> A+5, from B -> 6*B in both cases
+
+b) Give examples of a serializable schedule and a nonserializable schedule of
+   the 12 actions above.
+
+c) How many serial schedules of the 12 actions are there?
+-> There are 2. (T1,T2) and (T2,T1) 
+--------------------------------------------------------------------------------
+Exercise 18.2.2: 
+The two transactions of Exercise 18.2.1 can be written in our notation that shows 
+read- and write-actions only, as:
+T1: R1(A); W1(A); R1(B); W1(B);
+T2: R2(B); W2(B); R2(A); W2(A);
+
+a) Among the possible schedules of the eight actions above, how many are
+   conflict-equivalent to the serial order (T1, T2)?
+-> No other conflict-equivalent schedule, because we cannot swap adjacent elements without conlflict.
+(T1,T2):  R1(A); W1(A); R1(B); W1(B); R2(B); W2(B); R2(A); W2(A);
+                               ------------ conflict
+
+b) How many schedules of the eight actions are conflict-equivalent to the serial order (T2, T1)?
+-> No other, the cases are symmetric
+--------------------------------------------------------------------------------
+Exercise 18.2.3: 
+Suppose the transactions of Exercise 18.2.2 are changed to be:
+T1: r1(A); w1(A); r1(B); w1(B);
+T2: r2(A); w2(A); r2(B); w2(B);
+That is, the transactions retain their semantics from Exercise 18.2.1, but T2 has been changed 
+so A is processed before B. 
+Give:
+a) The number of conflict-serializable schedules.
+
+-> The number of schedules that are conflict-equvivalent to (T1,T2):  4!/(2!*2!) = 6
+because we can swap elements only in the underlined part of the schedule
+r1(A); w1(A); r1(B); w1(B);r2(A); w2(A); r2(B); w2(B);
+              --------------------------
+
+The number of schedules that are conflict-equvivalent to (T2,T1):  4!/(2!*2!) = 6,
+because the cases are symmetric
+
+-> So, the number of conflict-serializable schedules is 6 + 6.
+--------------------------------------------------------------------------------
+Exercise 2.
+Give the number of conflict-serializable schedules for the following pairs of transactions:
+(Give some justification in several words too.)
+a) T1: R1(A); W1(A); R1(B); W1(B);      T2: R2(C); W2(C); W2(D);  -> 7!/(4!*3!)
+b) T1: W1(A); R1(B); W1(B);             T2: R2(B); W2(B); R2(A);  -> 1 + 1 
+c) T1: R1(A); W1(A); R1(B);             T2: R2(B); W2(B); W2(A);  -> 1 + 4
+ (in case T2,T1 we cannot swap, in case T1,T2 we can swap R2(B) into 4 places.)
+--------------------------------------------------------------------------------
+Exercise 18.2.4: 
+For each of the following schedules:
+a) R1(A); R2(A); R3(B); W1(A); R2(C); R2(B); W2(B); W1(C);
+b) R1(A); R2(A); W1(B); W2(B); R1(B); R2(B); W2(C); W1(D);
+c) R1(A); R2(A); R1(B); R2(B); R3(A); R4(B); W1(A); W2(B);
+
+Answer the following questions:
+- What is the precedence graph for the schedule?
+- Is the schedule conflict-serializable? If so, what are all the conflict-equivalent
+  serial schedules?
+--------------------------------------------------------------------------------
+Exercise 18.3.2: 
+Here are the transactions of Exercise 18.3.1, with all unlocks moved to the end so 
+they are two-phase-locked.
+T1: l1(A); R1(A); W1(A); l1(B); R1(B); W1(B); u1(A); u1(B);
+T2: l2(B); R2(B); W2(B); l2(A); R2(A); W2(A); u2(B); u2(A);
+How many legal schedules of all the read and write actions of these transactions are there?
+--------------------------------------------------------------------------------
+Exercise 3.
+Give for the following schedules:
+- Are they legal?
+- Which transactions are consistent/two-phase-locked
+a) l1(A); W1(A); l1(B); u1(A); l2(A); W2(A); u2(A); R1(B); l2(C); W2(C); u2(C); u1(B)
+b) l1(A); W1(A); u1(A); l2(A); W2(A); l1(B); u2(A); R1(B); l2(C); W2(C); u2(C); u1(B)
+c) l1(A); W1(A); l2(A); W2(A); l1(B); u1(a); u2(A); R1(B); l2(C); W2(C); u2(C); u1(B)
+--------------------------------------------------------------------------------
+Exercise 18.3.4: 
+For the transaction described below, suppose that we insert one lock and one unlock 
+action for each database element that is accessed.
+r1(A); w1(B); 
+Tell how many orders of the lock, unlock, read, and write actions are:
+
+a) Consistent  -> 6!/(3!*3!)  (l,r,u), (l,w,u) in any interleavings
+b) Consistent, but not two-phase locked -> 2  only l,r,u,l,w,u and l,w,u,l,r,u  
+c) Consistent and two-phase locked. -> a) - b)
+d) Two-phase locked. -> 2*2*5*6  l,l then u,u finally r,w in any place
+e) Neither consistent nor two-phase locked. -> 6! - d) - b)
+------------------------------------------------------------
+Exercise 18.4.7: 
+Here is a schedule with one action missing:
+R1(A); R2(B); ???; W1(C); W2(A);
+Figure out what actions of certain types could replace the ??? and make the schedule not be 
+serializable. (Here we mean conflict-serializable.)
+Tell all possible nonserializable replacements for each of the following types of action: 
+(a) Read   -> find actions in such a way that the precedence graph contains a cycle
+(b) Write  -> find actions in such a way that the precedence graph contains a cycle
+------------------------------------------------------------
+Exercise 4.
+Insert lock (l) and unlock (u) actions into the following sequence, if possible, in such a way
+that the transaction be consistent, two-phase locked and the schedule be legal.
+If it is not possible, explain why.
+a) R2(A), W3(B), W1(A), W2(B), W1(C), R3(C)
+b) R2(A), W3(B), W1(A), W2(B), R3(C), W1(C)
+
+-> if there exists a cycle in the precedence graph, then it is impossible, otherwise you can probably find
+
